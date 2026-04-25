@@ -1057,11 +1057,15 @@ api_sources:
   # Records with remote_eligible: null (unknown) are always kept.
   remote_only: true
 
+  # Skip records whose location doesn't look US-eligible.
+  # Keeps: empty/null, "remote", "United States", "USA", US state abbreviations.
+  # Set to false if you're searching outside the US.
+  us_only: false
+
   # Sources to enable. Remove or comment out to disable individual sources.
   sources:
     - remoteok     # Remote-first, public, no query support
     - remotive     # Remote-first, public, accepts query
-    - arbeitnow    # Global/EU aggregator, public, no query support
     - jobicy       # Remote-only, public, partial query
     - the_muse     # Global, public, partial query
 

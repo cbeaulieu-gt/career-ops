@@ -33,6 +33,30 @@ const APPLICATIONS_PATH = 'data/applications.md';
 
 mkdirSync('data', { recursive: true });
 
+// ── US-eligibility filter ─────────────────────────────────────────────────
+//
+// Keeps records where location is:
+//   - null / empty string  (unknown → keep; remote boards often omit it)
+//   - contains "remote"    (no geo restriction)
+//   - contains "united states" or matches \bUSA?\b (whole word)
+//   - contains a US state abbreviation (CA, TX, NY, etc.)
+//
+// Discards records explicitly located outside the US (Spain, UK, Ireland…).
+
+const US_STATE_RE = /\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)\b/;
+
+function isUsEligible(location) {
+  if (!location || location.trim() === '') return true;
+  const loc   = location.trim();
+  const lower = loc.toLowerCase();
+  return (
+    lower.includes('remote') ||
+    lower.includes('united states') ||
+    /\busa?\b/i.test(loc) ||
+    US_STATE_RE.test(loc)
+  );
+}
+
 // ── Title filter (mirrors scan.mjs) ──────────────────────────────────────
 
 function buildTitleFilter(titleFilter) {
@@ -268,6 +292,7 @@ async function main() {
   const country       = apiConfig.country   ?? null;
   const location      = apiConfig.location  ?? null;
   const remoteOnly    = apiConfig.remote_only ?? false;
+  const usOnly        = apiConfig.us_only     ?? false;
   const credentials   = apiConfig.credentials ?? null;
 
   const sources       = cliSources
@@ -291,6 +316,7 @@ async function main() {
   console.log(`Hours:      ${hours}`);
   console.log(`Hydrate:    ${useHydrate}`);
   console.log(`Remote only: ${remoteOnly}`);
+  console.log(`US only:     ${usOnly}`);
   if (dryRun) console.log('(dry run — no files will be written)');
   console.log('');
 
@@ -342,6 +368,7 @@ async function main() {
   const date = new Date().toISOString().slice(0, 10);
   let totalNoUrl          = 0;
   let totalRemoteFiltered = 0;
+  let totalUsFiltered     = 0;
   let totalFiltered       = 0;
   let totalDupes          = 0;
   const newOffers         = [];
@@ -362,6 +389,12 @@ async function main() {
     // Optional remote filter (keeps null/unknown = pass, only removes explicit false)
     if (remoteOnly && record.remote_eligible === false) {
       totalRemoteFiltered++;
+      continue;
+    }
+
+    // Optional US-only location filter
+    if (usOnly && !isUsEligible(location_)) {
+      totalUsFiltered++;
       continue;
     }
 
@@ -411,6 +444,7 @@ async function main() {
   console.log(`Records received:        ${records.length}`);
   if (totalNoUrl)          console.log(`Skipped (no URL):        ${totalNoUrl}`);
   if (remoteOnly)          console.log(`Filtered non-remote:     ${totalRemoteFiltered} removed`);
+  if (usOnly)              console.log(`Filtered non-US:         ${totalUsFiltered} removed`);
   console.log(`Filtered by title:       ${totalFiltered} removed`);
   console.log(`Duplicates skipped:      ${totalDupes}`);
   console.log(`New offers added:        ${newOffers.length}`);
