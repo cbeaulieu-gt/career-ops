@@ -1025,6 +1025,29 @@ tracked_companies:
 api_sources:
   enabled: false    # set to true once job-aggregator is installed
 
+  # -- Level 4 title filter override (optional) --
+  # If present, this overrides the global `title_filter.positive` list for Level 4 ONLY.
+  # Negative keywords are still inherited from the global title_filter -- you generally
+  # still want to exclude Junior/Staff/Principal/iOS/embedded/etc. at Level 4.
+  #
+  # Why use this: Level 4 aggregators (RemoteOK, Remotive, Adzuna, Jooble, JSearch)
+  # return a much higher volume of generic listings than the curated Level 1-3 sources.
+  # The global positive list is intentionally broad (Backend, Platform, Infrastructure,
+  # Systems, DevOps, SRE, Solutions Architect, etc.), which lets too much noise through
+  # at Level 4. This override narrows Level 4 to a tighter scope without affecting
+  # Levels 1-3 (which keep using the global filter).
+  #
+  # Comment out / remove this block to fall back to the global filter.
+  # title_filter:
+  #   positive:
+  #     - "Software Engineer"
+  #     - "ML Engineer"
+  #     - "Machine Learning Engineer"
+  #     - "MLOps"
+  #     - "AI Engineer"
+  #     - "GenAI"
+  #     - "LLM"
+
   # Path to the job-aggregator executable.
   # Options:
   #   "job-aggregator"             if installed globally (pip install job-aggregator)

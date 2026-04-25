@@ -295,6 +295,44 @@ if (fileExists('VERSION')) {
   fail('VERSION file missing');
 }
 
+// ── 11. PORTALS EXAMPLE TEMPLATE ─────────────────────────────────
+
+console.log('\n11. Portals example template');
+
+try {
+  const yaml = (await import('js-yaml')).default;
+  const examplePath = 'templates/portals.example.yml';
+
+  if (!fileExists(examplePath)) {
+    fail(`${examplePath} missing`);
+  } else {
+    const exampleText = readFile(examplePath);
+    const parsed = yaml.load(exampleText);
+
+    if (parsed && parsed.title_filter && Array.isArray(parsed.title_filter.positive)) {
+      pass('templates/portals.example.yml parses as YAML with global title_filter.positive');
+    } else {
+      fail('templates/portals.example.yml missing title_filter.positive');
+    }
+
+    if (parsed && parsed.api_sources) {
+      pass('templates/portals.example.yml has api_sources block');
+    } else {
+      fail('templates/portals.example.yml missing api_sources block');
+    }
+
+    // Confirm the Level 4 title_filter override is documented (issue #6).
+    // The block lives commented out so it stays opt-in; the docs comment must remain.
+    if (exampleText.includes('Level 4 title filter override')) {
+      pass('api_sources Level 4 title_filter override block is documented');
+    } else {
+      fail('api_sources Level 4 title_filter override docs missing — see issue #6');
+    }
+  }
+} catch (e) {
+  fail(`Portals example template tests crashed: ${e.message}`);
+}
+
 // ── SUMMARY ─────────────────────────────────────────────────────
 
 console.log('\n' + '='.repeat(50));
