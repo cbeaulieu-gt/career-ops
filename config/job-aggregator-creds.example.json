@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "plugins": {
+    "adzuna": {
+      "app_id": "YOUR_ADZUNA_APP_ID",
+      "app_key": "YOUR_ADZUNA_APP_KEY"
+    },
+    "jooble": {
+      "api_key": "YOUR_JOOBLE_API_KEY"
+    },
+    "jsearch": {
+      "api_key": "YOUR_RAPIDAPI_KEY"
+    },
+    "the_muse": {
+      "api_key": "YOUR_THE_MUSE_API_KEY"
+    },
+    "usajobs": {
+      "email": "YOUR_EMAIL_ADDRESS",
+      "api_key": "YOUR_USAJOBS_API_KEY"
+    }
+  }
+}

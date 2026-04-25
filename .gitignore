@@ -41,3 +41,6 @@ bun.lock
 .claude/memory/
 career-dashboard
 package-lock.json
+
+# Git worktrees
+.worktrees/

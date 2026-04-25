@@ -278,6 +278,112 @@ search_queries:
     query: 'site:news.ycombinator.com OR site:hnrss.org "AI Engineer" OR "Forward Deployed" OR "DevRel" OR "Founding Engineer" remote'
     enabled: true
 
+  # -- Remote-friendly Europe boards --
+
+  - name: Remotive — AI/DevRel/SA/FDE
+    query: 'site:remotive.com "AI Engineer" OR "Developer Advocate" OR "Solutions Architect" OR "Forward Deployed" OR "DevRel" Europe'
+    enabled: true
+
+  - name: WeWorkRemotely — AI & DX
+    query: 'site:weworkremotely.com "AI" OR "DevRel" OR "Solutions Engineer" OR "Forward Deployed" OR "Founding Engineer"'
+    enabled: true
+
+  - name: Working Nomads — AI/DevRel/SA
+    query: 'site:workingnomads.com "AI Engineer" OR "Developer Advocate" OR "Solutions Architect" OR "Forward Deployed"'
+    enabled: true
+
+  - name: EU Remote Jobs — AI/DevRel/SA
+    query: 'site:euremotejobs.com "AI" OR "DevRel" OR "Solutions Architect" OR "Forward Deployed" OR "Founding Engineer"'
+    enabled: true
+
+  - name: RemoteOK — AI/DevRel/SA
+    query: 'site:remoteok.com "AI Engineer" OR "Developer Advocate" OR "Solutions Architect" OR "Forward Deployed" OR "Founding Engineer"'
+    enabled: true
+
+  # -- Specialized AI / Dev-Tools / FDE boards --
+
+  - name: ai-jobs.net — DevRel/SA/FDE
+    query: 'site:ai-jobs.net "Developer Advocate" OR "Solutions Architect" OR "Forward Deployed" OR "DevRel" remote Europe'
+    enabled: true
+
+  - name: ai-jobs.net — Founding/Applied AI
+    query: 'site:ai-jobs.net "Founding Engineer" OR "Applied AI Engineer" OR "Founding" remote'
+    enabled: true
+
+  - name: fwddeploy.com — Forward Deployed roles
+    query: 'site:fwddeploy.com "Forward Deployed" OR "Deployed Engineer" remote Europe OR EMEA'
+    enabled: true
+
+  - name: YC Jobs — DevRel/SA/FDE/Founding
+    query: 'site:ycombinator.com/jobs OR site:workatastartup.com "Forward Deployed" OR "Developer Advocate" OR "Founding Engineer" OR "Solutions Architect" remote'
+    enabled: true
+
+  - name: YC Jobs — Applied AI
+    query: 'site:workatastartup.com "Applied AI" OR "AI Engineer" OR "AI Agent" remote Europe'
+    enabled: true
+
+  # -- Spanish market specialized (high-value for Madrid/Barcelona-based candidates) --
+
+  - name: Manfred — Tech Senior España
+    query: 'site:getmanfred.com/en/job-offers "Solutions Architect" OR "DevRel" OR "Forward Deployed" OR "AI Engineer" OR "Founding"'
+    enabled: true
+
+  - name: Manfred — Remote AI/Senior
+    query: 'site:getmanfred.com "remote" "AI" OR "Senior" OR "Staff" OR "Lead"'
+    enabled: true
+
+  - name: Tecnoempleo — España IT
+    query: 'site:tecnoempleo.com "AI Engineer" OR "Solutions Architect" OR "DevRel" OR "Forward Deployed" OR "Founding Engineer"'
+    enabled: true
+
+  - name: Tecnoempleo — Remoto Senior
+    query: 'site:tecnoempleo.com "remoto" OR "remote" Senior "AI" OR "Architect" OR "Lead"'
+    enabled: true
+
+  - name: JobFluent — Spain startups
+    query: 'site:jobfluent.com Madrid OR Barcelona "AI" OR "Engineer" OR "Solutions" OR "DevRel"'
+    enabled: true
+
+  - name: Welcome to the Jungle — Spain tech
+    query: 'site:welcometothejungle.com Spain OR Madrid OR Barcelona "AI Engineer" OR "Solutions Architect" OR "DevRel" OR "Forward Deployed"'
+    enabled: true
+
+  # -- DevRel-specific boards --
+
+  - name: DevRelX Jobs
+    query: 'site:devrelx.com/jobs remote OR Europe OR EMEA'
+    enabled: true
+
+  - name: TrueUp — DevRel roles
+    query: 'site:trueup.io/devrel OR site:trueup.io "Developer Advocate" OR "DevRel" remote Europe'
+    enabled: true
+
+  - name: Remote Rocketship — DevRel
+    query: 'site:remoterocketship.com/jobs/developer-relations OR site:remoterocketship.com "DevRel" remote'
+    enabled: true
+
+  - name: DevRel Job board
+    query: 'site:devreljob.com remote OR Europe OR EMEA'
+    enabled: true
+
+  # -- European / global aggregators --
+
+  - name: Himalayas — Remote AI/Dev-tools
+    query: 'site:himalayas.app "AI Engineer" OR "Solutions Architect" OR "Developer Advocate" OR "Forward Deployed" OR "Founding Engineer" Europe'
+    enabled: true
+
+  - name: Jooble — España Tech Senior
+    query: 'site:jooble.org "AI Engineer" OR "Solutions Architect" OR "DevRel" Madrid OR remote España'
+    enabled: true
+
+  - name: EU Data Jobs — AI/ML Europe
+    query: 'site:eudatajobs.com "AI" OR "ML" OR "Data" "Engineer" OR "Architect" remote Europe'
+    enabled: true
+
+  - name: HN Who's Hiring — Remote AI
+    query: 'site:news.ycombinator.com OR site:hnrss.org "AI Engineer" OR "Forward Deployed" OR "DevRel" OR "Founding Engineer" remote'
+    enabled: true
+
 # -- Tracked companies --
 # Companies whose career pages are checked directly.
 # scan_method: playwright (default), websearch, greenhouse_api
@@ -894,3 +1000,70 @@ tracked_companies:
     scan_query: '"Maxim AI" OR "getmaxim" careers "engineer" OR "product"'
     notes: "AI evaluation and observability platform. Bangalore-based, mostly on-site."
     enabled: true
+
+# -- API Sources (Level 4) --
+# Job boards accessed via the job-aggregator Python package.
+# Install: pip install job-aggregator
+# Repo: https://github.com/cbeaulieu-gt/job-aggregator
+# Run: node scan-api.mjs
+#
+# No-auth sources (run without credentials):
+#   remoteok  — RemoteOK (remote-only, public API, no query support)
+#   remotive  — Remotive (remote-only, public API, accepts query)
+#   arbeitnow — Arbeitnow (global/EU, public API, no query support)
+#   jobicy    — Jobicy (remote-only, public API, partial query)
+#   the_muse  — The Muse (global, public API, partial query; optional api_key reduces throttling)
+#
+# Authenticated sources (add credentials to config/job-aggregator-creds.json):
+#   adzuna    — Adzuna (global-by-country, requires app_id + app_key)
+#   jooble    — Jooble (global, requires api_key)
+#   jsearch   — JSearch via RapidAPI (global, requires api_key)
+#   usajobs   — USAJobs (US federal, requires email + api_key)
+#
+# Credentials template: config/job-aggregator-creds.example.json
+
+api_sources:
+  enabled: false    # set to true once job-aggregator is installed
+
+  # Path to the job-aggregator executable.
+  # Options:
+  #   "job-aggregator"             if installed globally (pip install job-aggregator)
+  #   "/path/to/venv/bin/job-aggregator"      Unix venv path
+  #   "C:\\path\\to\\venv\\Scripts\\job-aggregator.exe"  Windows venv path
+  executable: "job-aggregator"
+
+  # Path to credentials JSON (see config/job-aggregator-creds.example.json).
+  # Set to null to run no-auth sources only.
+  credentials: null
+
+  # Pipe output through `job-aggregator hydrate` for full job descriptions.
+  # Records that fail hydration fall back to Playwright at evaluation time.
+  hydrate: true
+
+  # Lookback window in hours (24 = only jobs posted in the last 24 hours).
+  hours: 24
+
+  # Free-text query sent to sources that support it (remotive, adzuna, jooble).
+  # Sources without query support (remoteok, arbeitnow, jobicy) ignore this.
+  query: "software engineer"
+
+  # ISO 3166-1 alpha-2 country code for sources that accept it (adzuna).
+  country: "us"
+
+  # Free-text location hint for sources that accept it.
+  location: null
+
+  # Skip records explicitly marked remote_eligible: false.
+  # Records with remote_eligible: null (unknown) are always kept.
+  remote_only: true
+
+  # Sources to enable. Remove or comment out to disable individual sources.
+  sources:
+    - remoteok     # Remote-first, public, no query support
+    - remotive     # Remote-first, public, accepts query
+    - arbeitnow    # Global/EU aggregator, public, no query support
+    - jobicy       # Remote-only, public, partial query
+    - the_muse     # Global, public, partial query
+
+  # Sources to exclude even if listed in sources above.
+  exclude_sources: []
