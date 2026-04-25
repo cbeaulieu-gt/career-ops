@@ -21,7 +21,7 @@ Leer `portals.yml` que contiene:
 - `tracked_companies`: Empresas específicas con `careers_url` para navegación directa
 - `title_filter`: Keywords positive/negative/seniority_boost para filtrado de títulos
 
-## Estrategia de descubrimiento (3 niveles)
+## Estrategia de descubrimiento (4 niveles)
 
 ### Nivel 1 — Playwright directo (PRINCIPAL)
 
@@ -61,8 +61,38 @@ Los `search_queries` con `site:` filters cubren portales de forma transversal (t
 1. Nivel 1: Playwright → todas las `tracked_companies` con `careers_url`
 2. Nivel 2: API → todas las `tracked_companies` con `api:`
 3. Nivel 3: WebSearch → todos los `search_queries` con `enabled: true`
+4. Nivel 4: job-aggregator → job boards externos vía `node scan-api.mjs`
 
 Los niveles son aditivos — se ejecutan todos, los resultados se mezclan y deduplicar.
+
+### Nivel 4 — job-aggregator (JOB BOARDS EXTERNOS)
+
+Accede a job boards no cubiertos por los niveles 1–3 (RemoteOK, Remotive, Arbeitnow, Jobicy, The Muse, y más con credenciales).
+
+**Cuándo ejecutar Nivel 4:** Al final del scan, después de los Niveles 1–3. Ideal para descubrir roles en plataformas remote-first que no aparecen en Greenhouse/Lever/Ashby.
+
+**Cómo ejecutar:**
+```
+node scan-api.mjs                              # usa configuración de portals.yml api_sources
+node scan-api.mjs --dry-run                    # preview sin escribir archivos
+node scan-api.mjs --sources remoteok,remotive  # override lista de fuentes
+node scan-api.mjs --hours 48                   # override ventana de tiempo
+node scan-api.mjs --query "data engineer"      # override query de búsqueda
+```
+
+**Requisito:** `job-aggregator` instalado. Ver `api_sources.executable` en `portals.yml`.
+- Sin credenciales: `remoteok`, `remotive`, `arbeitnow`, `jobicy`, `the_muse`
+- Con credenciales (`config/job-aggregator-creds.json`): `adzuna`, `jooble`, `jsearch`, `usajobs`
+
+**Integración con pipeline:**
+- Nuevas ofertas se añaden a `pipeline.md` en el mismo formato que Niveles 1–3
+- Si `hydrate: true`, el JD completo se descarga antes de añadir al pipeline
+- Registros con `description_source != "full"` pasan al pipeline sin JD completo — el evaluador usará Playwright como fallback al momento de evaluar
+
+**Filtros aplicados por scan-api.mjs:**
+1. `title_filter` de `portals.yml` (mismo filtro que Niveles 1–3)
+2. `remote_only: true` descarta registros con `remote_eligible: false` (registros con `null` se mantienen)
+3. Dedup contra `scan-history.tsv`, `pipeline.md`, `applications.md`
 
 ## Workflow
 
@@ -137,6 +167,14 @@ Los niveles son aditivos — se ejecutan todos, los resultados se mezclan y dedu
 9. **Ofertas filtradas por título**: registrar en `scan-history.tsv` con status `skipped_title`
 10. **Ofertas duplicadas**: registrar con status `skipped_dup`
 11. **Ofertas expiradas (Nivel 3)**: registrar con status `skipped_expired`
+
+12. **Nivel 4 — job-aggregator scan** (si `api_sources.enabled: true` en `portals.yml`):
+    Ejecutar `node scan-api.mjs` — el script gestiona todo el proceso:
+    a. Invoca `job-aggregator jobs [args]` con los parámetros de `api_sources`
+    b. Si `hydrate: true`, pasa el output por `job-aggregator hydrate` para obtener JDs completos
+    c. Aplica `title_filter` de `portals.yml` y dedup contra las mismas 3 fuentes
+    d. Añade nuevas ofertas a `pipeline.md` y `scan-history.tsv` (portal: `api-{source}`)
+    e. Registros con `description_source != "full"` se añaden igualmente — el evaluador usa Playwright como fallback al procesar el pipeline
 
 ## Extracción de título y empresa de WebSearch results
 

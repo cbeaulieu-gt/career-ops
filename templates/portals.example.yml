@@ -995,3 +995,70 @@ tracked_companies:
     scan_query: '"Maxim AI" OR "getmaxim" careers "engineer" OR "product"'
     notes: "AI evaluation and observability platform. Bangalore-based, mostly on-site."
     enabled: true
+
+# -- API Sources (Level 4) --
+# Job boards accessed via the job-aggregator Python package.
+# Install: pip install job-aggregator
+# Repo: https://github.com/cbeaulieu-gt/job-aggregator
+# Run: node scan-api.mjs
+#
+# No-auth sources (run without credentials):
+#   remoteok  — RemoteOK (remote-only, public API, no query support)
+#   remotive  — Remotive (remote-only, public API, accepts query)
+#   arbeitnow — Arbeitnow (global/EU, public API, no query support)
+#   jobicy    — Jobicy (remote-only, public API, partial query)
+#   the_muse  — The Muse (global, public API, partial query; optional api_key reduces throttling)
+#
+# Authenticated sources (add credentials to config/job-aggregator-creds.json):
+#   adzuna    — Adzuna (global-by-country, requires app_id + app_key)
+#   jooble    — Jooble (global, requires api_key)
+#   jsearch   — JSearch via RapidAPI (global, requires api_key)
+#   usajobs   — USAJobs (US federal, requires email + api_key)
+#
+# Credentials template: config/job-aggregator-creds.example.json
+
+api_sources:
+  enabled: false    # set to true once job-aggregator is installed
+
+  # Path to the job-aggregator executable.
+  # Options:
+  #   "job-aggregator"             if installed globally (pip install job-aggregator)
+  #   "/path/to/venv/bin/job-aggregator"      Unix venv path
+  #   "C:\\path\\to\\venv\\Scripts\\job-aggregator.exe"  Windows venv path
+  executable: "job-aggregator"
+
+  # Path to credentials JSON (see config/job-aggregator-creds.example.json).
+  # Set to null to run no-auth sources only.
+  credentials: null
+
+  # Pipe output through `job-aggregator hydrate` for full job descriptions.
+  # Records that fail hydration fall back to Playwright at evaluation time.
+  hydrate: true
+
+  # Lookback window in hours (24 = only jobs posted in the last 24 hours).
+  hours: 24
+
+  # Free-text query sent to sources that support it (remotive, adzuna, jooble).
+  # Sources without query support (remoteok, arbeitnow, jobicy) ignore this.
+  query: "software engineer"
+
+  # ISO 3166-1 alpha-2 country code for sources that accept it (adzuna).
+  country: "us"
+
+  # Free-text location hint for sources that accept it.
+  location: null
+
+  # Skip records explicitly marked remote_eligible: false.
+  # Records with remote_eligible: null (unknown) are always kept.
+  remote_only: true
+
+  # Sources to enable. Remove or comment out to disable individual sources.
+  sources:
+    - remoteok     # Remote-first, public, no query support
+    - remotive     # Remote-first, public, accepts query
+    - arbeitnow    # Global/EU aggregator, public, no query support
+    - jobicy       # Remote-only, public, partial query
+    - the_muse     # Global, public, partial query
+
+  # Sources to exclude even if listed in sources above.
+  exclude_sources: []
