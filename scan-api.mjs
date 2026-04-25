@@ -300,7 +300,18 @@ async function main() {
     : (apiConfig.sources || []);
   const excludeSources = apiConfig.exclude_sources || [];
 
-  const titleFilter = buildTitleFilter(config.title_filter);
+  // Title filter: if api_sources.title_filter is present, it overrides the global
+  // positive list for Level 4 ONLY. Negative keywords are always inherited from the
+  // global title_filter (we still want Junior/Staff/Principal/iOS/etc. excluded here).
+  const overridePositive = apiConfig.title_filter?.positive;
+  const titleFilterSource = overridePositive
+    ? 'api_sources.title_filter (Level 4 override)'
+    : 'global title_filter';
+  const effectiveTitleFilter = {
+    positive: overridePositive ?? config.title_filter?.positive ?? [],
+    negative: config.title_filter?.negative ?? [],
+  };
+  const titleFilter = buildTitleFilter(effectiveTitleFilter);
 
   // 3. Build job-aggregator args
   const jobsArgs = ['jobs', '--format', 'jsonl', '--hours', String(hours)];
@@ -312,11 +323,12 @@ async function main() {
   if (credentials)          jobsArgs.push('--credentials',     credentials);
 
   console.log(`API Scan via job-aggregator — Level 4`);
-  console.log(`Sources:    ${sources.length ? sources.join(', ') : 'all registered'}`);
-  console.log(`Hours:      ${hours}`);
-  console.log(`Hydrate:    ${useHydrate}`);
+  console.log(`Sources:     ${sources.length ? sources.join(', ') : 'all registered'}`);
+  console.log(`Hours:       ${hours}`);
+  console.log(`Hydrate:     ${useHydrate}`);
   console.log(`Remote only: ${remoteOnly}`);
   console.log(`US only:     ${usOnly}`);
+  console.log(`Title filter: ${titleFilterSource} (${effectiveTitleFilter.positive.length} positive / ${effectiveTitleFilter.negative.length} negative)`);
   if (dryRun) console.log('(dry run — no files will be written)');
   console.log('');
 
