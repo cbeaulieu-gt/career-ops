@@ -12,8 +12,9 @@
  */
 
 import { execSync, execFileSync } from 'child_process';
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
+import { tmpdir } from 'os';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -312,6 +313,77 @@ if (fileExists('VERSION')) {
   }
 } else {
   fail('VERSION file missing');
+}
+
+// ── 11. MERGE-TRACKER URL DEDUP ─────────────────────────────────
+
+console.log('\n11. merge-tracker URL dedup');
+
+// Functional test: two entries at the same company with the same role title
+// but different URLs must land as two separate rows, not collapse into one.
+{
+  const tmpRoot = join(tmpdir(), `career-ops-test-${Date.now()}`);
+  try {
+    // Set up directory structure
+    mkdirSync(join(tmpRoot, 'data'), { recursive: true });
+    mkdirSync(join(tmpRoot, 'reports'), { recursive: true });
+    mkdirSync(join(tmpRoot, 'batch', 'tracker-additions'), { recursive: true });
+
+    // Empty tracker
+    writeFileSync(join(tmpRoot, 'data', 'applications.md'), [
+      '# Applications Tracker',
+      '',
+      '| # | Date | Company | Role | Score | Status | PDF | Report | Notes |',
+      '|---|------|---------|------|-------|--------|-----|--------|-------|',
+      '',
+    ].join('\n'));
+
+    // Two mock report files — same company/role title, different URLs (different req IDs)
+    writeFileSync(join(tmpRoot, 'reports', '001-github-2026-05-07.md'), [
+      '# GitHub — Senior Software Engineer',
+      '**Score:** 4.3/5',
+      '**URL:** https://github.careers/jobs/5381',
+      '**Status:** Evaluated',
+    ].join('\n'));
+
+    writeFileSync(join(tmpRoot, 'reports', '002-github-2026-05-07.md'), [
+      '# GitHub — Senior Software Engineer',
+      '**Score:** 4.1/5',
+      '**URL:** https://github.careers/jobs/5325',
+      '**Status:** Evaluated',
+    ].join('\n'));
+
+    // Two TSV additions for the same company+role title but different report links
+    writeFileSync(
+      join(tmpRoot, 'batch', 'tracker-additions', '001-github.tsv'),
+      '1\t2026-05-07\tGitHub\tSenior Software Engineer\tEvaluated\t4.3/5\t❌\t[1](reports/001-github-2026-05-07.md)\tCode Search team'
+    );
+    writeFileSync(
+      join(tmpRoot, 'batch', 'tracker-additions', '002-github.tsv'),
+      '2\t2026-05-07\tGitHub\tSenior Software Engineer\tEvaluated\t4.1/5\t❌\t[2](reports/002-github-2026-05-07.md)\tObservability team'
+    );
+
+    // Run merge-tracker pointed at our temp dir
+    execFileSync('node', [join(ROOT, 'merge-tracker.mjs')], {
+      cwd: ROOT,
+      env: { ...process.env, CAREER_OPS_ROOT: tmpRoot },
+      encoding: 'utf-8',
+      timeout: 15000,
+    });
+
+    const result = readFileSync(join(tmpRoot, 'data', 'applications.md'), 'utf-8');
+    const dataRows = result.split('\n').filter(l => l.startsWith('|') && !l.includes('---') && !l.includes('Company'));
+
+    if (dataRows.length === 2) {
+      pass('Two distinct GitHub URLs produce two separate tracker rows (URL dedup fix)');
+    } else {
+      fail(`URL dedup: expected 2 rows, got ${dataRows.length} — distinct roles may be collapsing`);
+    }
+  } catch (e) {
+    fail(`merge-tracker URL dedup test crashed: ${e.message}`);
+  } finally {
+    try { rmSync(tmpRoot, { recursive: true, force: true }); } catch { /* best effort */ }
+  }
 }
 
 // ── SUMMARY ─────────────────────────────────────────────────────

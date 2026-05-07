@@ -7,11 +7,17 @@
  * - 8-col: num\tdate\tcompany\trole\tstatus\tscore\tpdf\treport (no notes)
  * - Pipe-delimited (markdown table row): | col | col | ... |
  *
- * Dedup: company normalized + role fuzzy match + report number match
+ * Dedup (priority order):
+ * 1. URL match — reads **URL:** from report file; distinct URLs = distinct entries
+ * 2. Report number match
+ * 3. Entry number match
+ * 4. Company normalized + role fuzzy match (legacy fallback, no URL available)
+ *
  * If duplicate with higher score → update in-place, update report link
  * Validates status against states.yml (rejects non-canonical, logs warning)
  *
  * Run: node career-ops/merge-tracker.mjs [--dry-run] [--verify]
+ * Test: CAREER_OPS_ROOT=/tmp/test-dir node career-ops/merge-tracker.mjs
  */
 
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, renameSync, existsSync } from 'fs';
@@ -19,7 +25,8 @@ import { join, basename, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execFileSync } from 'child_process';
 
-const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
+// CAREER_OPS_ROOT env var allows tests to redirect to a temp directory
+const CAREER_OPS = process.env.CAREER_OPS_ROOT || dirname(fileURLToPath(import.meta.url));
 // Support both layouts: data/applications.md (boilerplate) and applications.md (original)
 const APPS_FILE = existsSync(join(CAREER_OPS, 'data/applications.md'))
   ? join(CAREER_OPS, 'data/applications.md')
@@ -123,6 +130,48 @@ function roleFuzzyMatch(a, b) {
 function extractReportNum(reportStr) {
   const m = reportStr.match(/\[(\d+)\]/);
   return m ? parseInt(m[1]) : null;
+}
+
+/**
+ * Normalize a URL for dedup comparison:
+ * - Lowercase host + path
+ * - Strip fragment (#...)
+ * - Strip common tracking query params (utm_*, ref, source, via, gh_src)
+ * - Strip trailing slash
+ * Preserves req IDs embedded in the path (e.g. /jobs/5381 vs /jobs/5325).
+ */
+export function normalizeUrl(url) {
+  try {
+    const u = new URL(url.toLowerCase().trim());
+    u.hash = '';
+    for (const p of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
+                      'ref', 'source', 'via', 'gh_src', 'ss', 'sid']) {
+      u.searchParams.delete(p);
+    }
+    return u.toString().replace(/\/+$/, '');
+  } catch {
+    return url.toLowerCase().trim().replace(/\/+$/, '');
+  }
+}
+
+/**
+ * Extract and normalize the **URL:** line from a report markdown file.
+ * reportField is the markdown link cell: "[123](reports/123-slug-date.md)"
+ * Returns the normalized URL string, or null if not found / file missing.
+ */
+export function extractUrlFromReport(reportField, baseDir) {
+  if (!reportField) return null;
+  const m = reportField.match(/\(([^)]+\.md)\)/);
+  if (!m) return null;
+  const reportPath = join(baseDir, m[1]);
+  if (!existsSync(reportPath)) return null;
+  try {
+    const content = readFileSync(reportPath, 'utf-8');
+    const urlMatch = content.match(/\*\*URL:\*\*\s*(https?:\/\/[^\s]+)/);
+    return urlMatch ? normalizeUrl(urlMatch[1]) : null;
+  } catch {
+    return null;
+  }
 }
 
 function parseScore(s) {
@@ -249,6 +298,14 @@ for (const line of appLines) {
 
 console.log(`📊 Existing: ${existingApps.length} entries, max #${maxNum}`);
 
+// Build URL index upfront: normalized URL → existing app entry.
+// One file read per existing entry with a report link; cached for O(1) lookup.
+const urlIndex = new Map();
+for (const app of existingApps) {
+  const url = extractUrlFromReport(app.report, CAREER_OPS);
+  if (url) urlIndex.set(url, app);
+}
+
 // Read tracker additions
 if (!existsSync(ADDITIONS_DIR)) {
   console.log('No tracker-additions directory found.');
@@ -280,14 +337,22 @@ for (const file of tsvFiles) {
   const addition = parseTsvContent(content, file);
   if (!addition) { skipped++; continue; }
 
-  // Check for duplicate by:
-  // 1. Exact report number match
-  // 2. Company + role fuzzy match
+  // Dedup priority:
+  // 1. URL match (primary — distinct URLs = distinct roles, even at same company)
+  // 2. Report number match
+  // 3. Entry number match
+  // 4. Company + role fuzzy match (legacy fallback when no URL available)
   const reportNum = extractReportNum(addition.report);
   let duplicate = null;
 
-  if (reportNum) {
-    // Check if this report number already exists
+  // 1. URL-based dedup — the canonical key for distinguishing roles
+  const additionUrl = extractUrlFromReport(addition.report, CAREER_OPS);
+  if (additionUrl) {
+    duplicate = urlIndex.get(additionUrl) || null;
+  }
+
+  if (!duplicate && reportNum) {
+    // 2. Report number match
     duplicate = existingApps.find(app => {
       const existingReportNum = extractReportNum(app.report);
       return existingReportNum === reportNum;
@@ -295,15 +360,19 @@ for (const file of tsvFiles) {
   }
 
   if (!duplicate) {
-    // Exact entry number match
+    // 3. Exact entry number match
     duplicate = existingApps.find(app => app.num === addition.num);
   }
 
-  if (!duplicate) {
-    // Company + role fuzzy match
+  if (!duplicate && !additionUrl) {
+    // 4. Company + role fuzzy match — only when addition has no URL
+    // (avoids collapsing distinct roles at the same company that share a title)
     const normCompany = normalizeCompany(addition.company);
     duplicate = existingApps.find(app => {
       if (normalizeCompany(app.company) !== normCompany) return false;
+      // Skip this fallback if the existing entry has a URL — different URL = different role
+      const existingUrl = extractUrlFromReport(app.report, CAREER_OPS);
+      if (existingUrl) return false;
       return roleFuzzyMatch(addition.role, app.role);
     });
   }
