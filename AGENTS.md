@@ -50,7 +50,8 @@ AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluat
 
 | File | Function |
 |------|----------|
-| `data/applications.md` | Application tracker |
+| `data/applications.md` | Application tracker (active rows only — Applied, Interview, Offer, Responded, Rejected, recent Evaluated) |
+| `data/applications-archive.md` | Archive of terminal entries (SKIP, Discarded, old Evaluated-no-PDF) — **do NOT load during evaluations**; only read on explicit historical lookup request |
 | `data/pipeline.md` | Inbox of pending URLs |
 | `data/scan-history.tsv` | Scanner dedup history |
 | `portals.yml` | Query and company config |
@@ -300,6 +301,24 @@ Write one TSV file per evaluation to `batch/tracker-additions/{num}-{company-slu
 9. `notes` -- one-line summary
 
 **Note:** In applications.md, score comes BEFORE status. The merge script handles this column swap automatically.
+
+### Haiku Sub-Agents
+
+Three lightweight agents handle mechanical work at Haiku cost — never run these tasks inline on the main runner:
+
+| Agent | File | Triggers when |
+|---|---|---|
+| `job-scraper` | `.claude/agents/job-scraper.md` | Liveness-only check needed (no JD text required — e.g., portal-scanner Level 3 verification) |
+| `jd-fetcher` | `.claude/agents/jd-fetcher.md` | Evaluating a URL — combines liveness check + full JD extraction in one Playwright navigation |
+| `portal-scanner` | `.claude/agents/portal-scanner.md` | User requests a portal scan (`scan` mode) |
+
+**When to use which:**
+- `jd-fetcher` for all evaluation flows (auto-pipeline, oferta, pipeline modes) — single navigation, returns liveness + JD text
+- `job-scraper` for liveness-only needs (portal-scanner Level 3, quick freshness check) — no JD text needed
+- `portal-scanner` for full scan operations — reads portals.yml, writes pipeline.md and scan-history.tsv
+
+All agents read and write files directly. The runner dispatches and reads their compact output blocks (`LIVENESS_RESULT` / `JD_FETCH_RESULT` / `SCAN_RESULT`).
+
 
 ### Pipeline Integrity
 

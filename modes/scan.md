@@ -6,15 +6,17 @@ Escanea portales de empleo configurados, filtra por relevancia de título, y añ
 
 ## Ejecución recomendada
 
-Ejecutar como subagente para no consumir contexto del main:
+Dispatch the `portal-scanner` agent (Haiku). It handles all three scan levels, dedup, file writes, and returns a compact `SCAN_RESULT` block. Do NOT run the scan inline — the agent reads portals.yml, scan-history.tsv, applications.md, and pipeline.md directly.
 
 ```
 Agent(
-    subagent_type="general-purpose",
-    prompt="[contenido de este archivo + datos específicos]",
-    run_in_background=True
+    subagent_type="portal-scanner",
+    prompt="Run a full portal scan. Today is {YYYY-MM-DD}.",
+    run_in_background=False
 )
 ```
+
+Once the agent returns, read the `SCAN_RESULT` block and present the summary to the user using the format in **Resumen de salida** below.
 
 ## Configuración
 
@@ -91,7 +93,9 @@ Los niveles son aditivos — se ejecutan todos, los resultados se mezclan y dedu
       - `variables.organizationHostedJobsPageName: {company}`
       - query GraphQL de `jobBoardWithTeams` + `jobPostings { id title locationName employmentType compensationTierSummary }`
    d. Para **BambooHR**, la lista solo trae metadatos básicos. Para cada item relevante, leer `id`, hacer GET a `https://{company}.bamboohr.com/careers/{id}/detail`, y extraer el JD completo desde `result.jobOpening`. Usar `jobOpeningShareUrl` como URL pública si viene; si no, usar la URL de detalle.
-   e. Para **Workday**, enviar POST JSON con al menos `{"appliedFacets":{},"limit":20,"offset":0,"searchText":""}` y paginar por `offset` hasta agotar resultados
+   e. Para **Workday**, enviar POST JSON con al menos `{"appliedFacets":{},"limit":20,"offset":0,"searchText":""}` y paginar por `offset` hasta agotar resultados.
+
+      **Workday recovery path:** Si la página de búsqueda con UI/Playwright devuelve 0 resultados y los filtros parecen estar configurados (Country/Remote), los IDs de los facetas (`workerSubType`, `Location_Country`, etc.) probablemente están desactualizados — Workday rota estos IDs cuando reorganiza taxonomías. **No abandonar el portal: usar el endpoint `/wday/cxs/{company}/{site}/jobs` directamente sin `appliedFacets`** y filtrar la respuesta en el cliente por la propiedad `locationsText` o `bulletFields`. Este patrón se ha observado en NVIDIA (2026-04-19 a 2026-04-23 con UI rota; 2026-04-25 con API directa devolviendo 425 resultados limpios).
    f. Para cada job extraer y normalizar: `{title, url, company}`
    g. Acumular en lista de candidatos (dedup con Nivel 1)
 
