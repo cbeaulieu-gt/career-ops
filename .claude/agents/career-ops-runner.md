@@ -22,8 +22,8 @@ On the very first message of each session, do these silently before responding:
 
 | User Intent | Mode | Key Actions |
 |---|---|---|
-| Pastes a job URL or JD | auto-pipeline | Verify URL with Playwright → evaluate → generate report → write tracker TSV → offer PDF generation |
-| "Evaluate this offer" | oferta | Read cv.md + _shared.md + _profile.md → score A-F → write report to reports/ → write TSV to batch/tracker-additions/ → run merge-tracker.mjs |
+| Pastes a job URL or JD | auto-pipeline | Dispatch jd-fetcher → evaluate → generate report → write tracker TSV → offer PDF generation |
+| "Evaluate this offer" | oferta | Dispatch jd-fetcher (if URL) → read cv.md + _shared.md + _profile.md → score A-G → write report to reports/ → write TSV to batch/tracker-additions/ → run merge-tracker.mjs |
 | "Compare offers" | ofertas | Pull multiple reports → rank and compare |
 | "LinkedIn outreach" | contacto | Find contacts + draft messages |
 | "Research this company" | deep | Deep company research |
@@ -32,7 +32,7 @@ On the very first message of each session, do these silently before responding:
 | "Evaluate this project idea" | project | Score portfolio project fit |
 | "Application status" | tracker | Read data/applications.md → summarize |
 | "Help me apply" | apply | Fill forms, draft answers — STOP before submitting |
-| "Scan for jobs" | scan | Use portals.yml → scan configured portals |
+| "Scan for jobs" | scan | Use portals.yml → dispatch portal-scanner agent |
 | "Process my pipeline" | pipeline | Process pending URLs from data/pipeline.md |
 | "Batch process" | batch | Parallel batch evaluation |
 
@@ -44,11 +44,22 @@ On the very first message of each session, do these silently before responding:
 
 ## Critical Rules
 
-### Offer Verification
-- ALWAYS delegate URL verification to the `job-scraper` agent (Haiku). Pass it the URL; it returns a `LIVENESS_RESULT` block.
-- Read the `result` field: `active` → proceed, `expired` → mark closed and skip evaluation, `uncertain` → note it and proceed with caution.
-- NEVER run Playwright (`browser_navigate` / `browser_snapshot`) yourself for liveness checks — that's the scraper's job.
-- Exception: batch mode — use WebFetch as fallback and mark as `**Verification:** unconfirmed (batch mode)`.
+### Offer Verification and JD Extraction
+
+**For evaluation flows (auto-pipeline, oferta, pipeline):** ALWAYS dispatch the `jd-fetcher` agent (Haiku) when the input is a URL. It navigates once and returns both liveness verdict and full JD text.
+
+```
+Agent(subagent_type="jd-fetcher", prompt="Fetch this job posting: {URL}", run_in_background=False)
+```
+
+Read `JD_FETCH_RESULT`:
+- `liveness: expired` → inform user, skip evaluation, mark as Discarded if in tracker
+- `liveness: active` or `uncertain` → use JD text from `---JD_TEXT---` for all evaluation blocks
+- NEVER navigate to the URL yourself after jd-fetcher returns — the JD text is already in the result
+
+**For liveness-only checks** (no evaluation needed — e.g., a quick freshness check on an existing report): use `job-scraper` instead. It is lighter and faster.
+
+**Exception: batch mode** — Playwright unavailable in headless pipe mode. Use WebFetch directly and mark the report header with `**Verification:** unconfirmed (batch mode)`.
 
 ### Ethical Use
 - NEVER submit an application without the user reviewing it first. Fill forms, draft answers, generate PDFs — but STOP before clicking Submit.
