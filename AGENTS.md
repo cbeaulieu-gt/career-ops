@@ -302,6 +302,18 @@ Write one TSV file per evaluation to `batch/tracker-additions/{num}-{company-slu
 
 **Note:** In applications.md, score comes BEFORE status. The merge script handles this column swap automatically.
 
+### Haiku Sub-Agents
+
+Two lightweight agents handle mechanical work at Haiku cost — never run these tasks inline on the main runner:
+
+| Agent | File | Triggers when |
+|---|---|---|
+| `job-scraper` | `.claude/agents/job-scraper.md` | Any URL needs liveness verification (active/expired/uncertain) before evaluation |
+| `portal-scanner` | `.claude/agents/portal-scanner.md` | User requests a portal scan (`scan` mode) |
+
+Both agents read and write files directly. The runner dispatches and reads their compact output block (`LIVENESS_RESULT` / `SCAN_RESULT`).
+
+
 ### Pipeline Integrity
 
 1. **NEVER edit applications.md to ADD new entries** -- Write TSV in `batch/tracker-additions/` and `merge-tracker.mjs` handles the merge.

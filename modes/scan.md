@@ -6,15 +6,17 @@ Escanea portales de empleo configurados, filtra por relevancia de título, y añ
 
 ## Ejecución recomendada
 
-Ejecutar como subagente para no consumir contexto del main:
+Dispatch the `portal-scanner` agent (Haiku). It handles all three scan levels, dedup, file writes, and returns a compact `SCAN_RESULT` block. Do NOT run the scan inline — the agent reads portals.yml, scan-history.tsv, applications.md, and pipeline.md directly.
 
 ```
 Agent(
-    subagent_type="general-purpose",
-    prompt="[contenido de este archivo + datos específicos]",
-    run_in_background=True
+    subagent_type="portal-scanner",
+    prompt="Run a full portal scan. Today is {YYYY-MM-DD}.",
+    run_in_background=False
 )
 ```
+
+Once the agent returns, read the `SCAN_RESULT` block and present the summary to the user using the format in **Resumen de salida** below.
 
 ## Configuración
 
