@@ -2,6 +2,24 @@
 
 Cuando el candidato pega una oferta (texto o URL), entregar SIEMPRE los 7 bloques (A-F evaluation + G legitimacy):
 
+## Pre-Paso — Extracción del JD (solo si input es URL)
+
+Si el input es una URL (no texto pegado), dispatch the `jd-fetcher` agent (Haiku) first:
+
+```
+Agent(
+    subagent_type="jd-fetcher",
+    prompt="Fetch this job posting: {URL}",
+    run_in_background=False
+)
+```
+
+Read `JD_FETCH_RESULT`:
+- `liveness: expired` → inform user, skip evaluation, done.
+- `liveness: active` or `uncertain` → use JD text from `---JD_TEXT---` for all blocks below. The liveness result also feeds Block G (Posting Freshness — apply button status already known).
+
+Si el input es texto de JD pegado directamente: usar sin fetch.
+
 ## Paso 0 — Detección de Arquetipo
 
 Clasificar la oferta en uno de los 6 arquetipos (ver `_shared.md`). Si es híbrido, indicar los 2 más cercanos. Esto determina:

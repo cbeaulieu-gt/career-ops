@@ -4,17 +4,24 @@ Cuando el usuario pega un JD (texto o URL) sin sub-comando explícito, ejecutar 
 
 ## Paso 0 — Extraer JD
 
-Si el input es una **URL** (no texto de JD pegado), seguir esta estrategia para extraer el contenido:
+Si el input es texto de JD pegado directamente (no URL): usar directamente, sin necesidad de fetch.
 
-**Orden de prioridad:**
+Si el input es una **URL**, dispatch the `jd-fetcher` agent (Haiku):
 
-1. **Playwright (preferido):** La mayoría de portales de empleo (Lever, Ashby, Greenhouse, Workday) son SPAs. Usar `browser_navigate` + `browser_snapshot` para renderizar y leer el JD.
-2. **WebFetch (fallback):** Para páginas estáticas (ZipRecruiter, WeLoveProduct, company career pages).
-3. **WebSearch (último recurso):** Buscar título del rol + empresa en portales secundarios que indexan el JD en HTML estático.
+```
+Agent(
+    subagent_type="jd-fetcher",
+    prompt="Fetch this job posting: {URL}",
+    run_in_background=False
+)
+```
 
-**Si ningún método funciona:** Pedir al candidato que pegue el JD manualmente o comparta un screenshot.
+Read the returned `JD_FETCH_RESULT` block:
+- `liveness: expired` → inform the user the posting is closed, skip evaluation, update tracker as Discarded if it was already there.
+- `liveness: uncertain` → note it, proceed with caution using the extracted JD text.
+- `liveness: active` → proceed with evaluation using the JD text from `---JD_TEXT---`.
 
-**Si el input es texto de JD** (no URL): usar directamente, sin necesidad de fetch.
+**Si ningún método funciona** (jd-fetcher returns FETCH_FAILED): Pedir al candidato que pegue el JD manualmente o comparta un screenshot.
 
 ## Paso 1 — Evaluación A-G
 Ejecutar exactamente igual que el modo `oferta` (leer `modes/oferta.md` para todos los bloques A-F + Block G Posting Legitimacy).
