@@ -50,7 +50,7 @@ AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluat
 
 | File | Function |
 |------|----------|
-| `data/applications.md` | Application tracker |
+| `data/applications.md` | Application tracker (active rows — see archive note below) |
 | `data/pipeline.md` | Inbox of pending URLs |
 | `data/scan-history.tsv` | Scanner dedup history |
 | `portals.yml` | Query and company config |
@@ -300,6 +300,17 @@ Write one TSV file per evaluation to `batch/tracker-additions/{num}-{company-slu
 9. `notes` -- one-line summary
 
 **Note:** In applications.md, score comes BEFORE status. The merge script handles this column swap automatically.
+
+### Haiku Sub-Agents
+
+Two lightweight agents handle mechanical work at Haiku cost — never run these tasks inline on the main runner:
+
+| Agent | File | Triggers when |
+|---|---|---|
+| `job-scraper` | `.claude/agents/job-scraper.md` | Any URL needs liveness verification (active/expired/uncertain) before evaluation |
+| `portal-scanner` | `.claude/agents/portal-scanner.md` | User requests a portal scan (`scan` mode) |
+
+Both agents read and write files directly. The runner dispatches and reads their compact output block (`LIVENESS_RESULT` / `SCAN_RESULT`).
 
 ### Pipeline Integrity
 
