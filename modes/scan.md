@@ -121,7 +121,9 @@ node scan-api.mjs --query "data engineer"      # override query de búsqueda
       - `variables.organizationHostedJobsPageName: {company}`
       - query GraphQL de `jobBoardWithTeams` + `jobPostings { id title locationName employmentType compensationTierSummary }`
    d. Para **BambooHR**, la lista solo trae metadatos básicos. Para cada item relevante, leer `id`, hacer GET a `https://{company}.bamboohr.com/careers/{id}/detail`, y extraer el JD completo desde `result.jobOpening`. Usar `jobOpeningShareUrl` como URL pública si viene; si no, usar la URL de detalle.
-   e. Para **Workday**, enviar POST JSON con al menos `{"appliedFacets":{},"limit":20,"offset":0,"searchText":""}` y paginar por `offset` hasta agotar resultados
+   e. Para **Workday**, enviar POST JSON con al menos `{"appliedFacets":{},"limit":20,"offset":0,"searchText":""}` y paginar por `offset` hasta agotar resultados.
+
+      **Workday recovery path:** Si la página de búsqueda con UI/Playwright devuelve 0 resultados y los filtros parecen estar configurados (Country/Remote), los IDs de los facetas (`workerSubType`, `Location_Country`, etc.) probablemente están desactualizados — Workday rota estos IDs cuando reorganiza taxonomías. **No abandonar el portal: usar el endpoint `/wday/cxs/{company}/{site}/jobs` directamente sin `appliedFacets`** y filtrar la respuesta en el cliente por la propiedad `locationsText` o `bulletFields`. Este patrón se ha observado en NVIDIA (2026-04-19 a 2026-04-23 con UI rota; 2026-04-25 con API directa devolviendo 425 resultados limpios).
    f. Para cada job extraer y normalizar: `{title, url, company}`
    g. Acumular en lista de candidatos (dedup con Nivel 1)
 
