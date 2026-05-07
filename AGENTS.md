@@ -50,7 +50,8 @@ AI-powered, CLI-agnostic job search automation: pipeline tracking, offer evaluat
 
 | File | Function |
 |------|----------|
-| `data/applications.md` | Application tracker (active rows — see archive note below) |
+| `data/applications.md` | Application tracker (active rows only — Applied, Interview, Offer, Responded, Rejected, recent Evaluated) |
+| `data/applications-archive.md` | Archive of terminal entries (SKIP, Discarded, old Evaluated-no-PDF) — **do NOT load during evaluations**; only read on explicit historical lookup request |
 | `data/pipeline.md` | Inbox of pending URLs |
 | `data/scan-history.tsv` | Scanner dedup history |
 | `portals.yml` | Query and company config |
@@ -311,6 +312,7 @@ Two lightweight agents handle mechanical work at Haiku cost — never run these 
 | `portal-scanner` | `.claude/agents/portal-scanner.md` | User requests a portal scan (`scan` mode) |
 
 Both agents read and write files directly. The runner dispatches and reads their compact output block (`LIVENESS_RESULT` / `SCAN_RESULT`).
+
 
 ### Pipeline Integrity
 
