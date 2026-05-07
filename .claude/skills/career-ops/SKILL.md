@@ -1,12 +1,12 @@
 ---
 name: career-ops
-description: AI job search command center -- evaluate offers, generate CVs, scan portals, track applications
+description: AI job search command center — evaluate offers, generate CVs, scan portals, track applications
 user_invocable: true
 args: mode
 argument-hint: "[scan | deep | pdf | oferta | ofertas | apply | batch | tracker | pipeline | contacto | training | project | interview-prep | update]"
 ---
 
-# career-ops -- Router
+# career-ops — Router
 
 ## Mode Routing
 
@@ -14,7 +14,7 @@ Determine the mode from `{{mode}}`:
 
 | Input | Mode |
 |-------|------|
-| (empty / no args) | `discovery` -- Show command menu |
+| (empty / no args) | `discovery` — Show command menu |
 | JD text or URL (no sub-command) | **`auto-pipeline`** |
 | `oferta` | `oferta` |
 | `ofertas` | `ofertas` |
@@ -42,12 +42,12 @@ If `{{mode}}` is not a sub-command AND doesn't look like a JD, show discovery.
 Show this menu:
 
 ```
-career-ops -- Command Center
+career-ops — Command Center
 
 Available commands:
   /career-ops {JD}      → AUTO-PIPELINE: evaluate + report + PDF + tracker (paste text or URL)
   /career-ops pipeline  → Process pending URLs from inbox (data/pipeline.md)
-  /career-ops oferta    → Evaluation only A-F (no auto PDF)
+  /career-ops oferta    → Evaluation only A-G (no auto PDF)
   /career-ops ofertas   → Compare and rank multiple offers
   /career-ops contacto  → LinkedIn power move: find contacts + draft message
   /career-ops deep      → Deep research prompt about company
@@ -80,16 +80,5 @@ Applies to: `auto-pipeline`, `oferta`, `ofertas`, `pdf`, `contacto`, `apply`, `p
 Read `modes/{mode}.md`
 
 Applies to: `tracker`, `deep`, `training`, `project`, `patterns`, `followup`
-
-### Modes delegated to subagent:
-For `scan`, `apply` (with Playwright), and `pipeline` (3+ URLs): launch as Agent with the content of `_shared.md` + `modes/{mode}.md` injected into the subagent prompt.
-
-```
-Agent(
-  subagent_type="general-purpose",
-  prompt="[content of modes/_shared.md]\n\n[content of modes/{mode}.md]\n\n[invocation-specific data]",
-  description="career-ops {mode}"
-)
-```
 
 Execute the instructions from the loaded mode file.
