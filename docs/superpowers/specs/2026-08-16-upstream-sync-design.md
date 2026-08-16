@@ -1,8 +1,8 @@
 # Upstream Synchronization Design
 
-**Status:** Approved in conversation on 2026-08-16  
-**Tracking:** #25  
-**Fork baseline:** `5f40cea`  
+**Status:** Approved in conversation on 2026-08-16
+**Tracking:** #25
+**Fork baseline:** `5f40cea`
 **Upstream baseline:** `22cbe88`
 
 ## Goal
