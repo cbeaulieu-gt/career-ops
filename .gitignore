@@ -21,6 +21,8 @@ reports/*.md
 !reports/.gitkeep
 output/*
 !output/.gitkeep
+# Generated CV/cover-letter output that leaked into the temporary directory
+tmp/
 batch/logs/*
 !batch/logs/.gitkeep
 batch/batch-state.tsv
@@ -30,6 +32,8 @@ batch/tracker-additions/**/*.tsv
 !batch/tracker-additions/.gitkeep
 jds/*
 !jds/.gitkeep
+# Stray JD capture that belongs with ignored JD artifacts
+transcarent-jd-snapshot.yml
 
 # Personal documents — never commit scans or copies of these (PII).
 # Catches common identity/credential filenames so they can't be staged by accident.
@@ -58,6 +62,8 @@ writing-samples/*
 config/profile.yml
 config/cv-facts.json
 config/benchmarks.yml
+# Job aggregator credentials — never commit
+config/job-aggregator-creds.json
 portals.yml
 modes/_profile.md
 modes/_custom.md
@@ -112,6 +118,8 @@ data/model-blacklist.json
 .vscode/
 
 # CLI-specific local config
+# Claude CLI backup config is machine-local
+.claude_bak/
 .claude/settings.local.json
 .claude/memory/
 .opencode/settings.local.json
