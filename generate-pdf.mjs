@@ -33,7 +33,7 @@
  * Uses Chromium headless to render the HTML and produce a clean, ATS-parseable PDF.
  */
 
-import { chromium } from 'playwright';
+import { firefox } from 'playwright';
 import { resolve, dirname, relative, sep, isAbsolute, basename } from 'path';
 import { readFile } from 'fs/promises';
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'fs';
@@ -1450,7 +1450,7 @@ export async function inlineLocalFonts(html) {
  * @returns {Promise<{outputPath: string, pageCount: number, size: number}>}
  */
 export async function renderHtmlToPdf(html, outputPath, opts = {}) {
-  const launchBrowser = opts.launchBrowser || ((options) => chromium.launch(options));
+  const launchBrowser = opts.launchBrowser || ((options) => firefox.launch(options));
   let browser = null;
   try {
     browser = await launchBrowser({ headless: true });
@@ -1636,7 +1636,7 @@ async function renderInPage(browser, html, outputPath, opts = {}) {
  * @returns {Promise<Array<{outputPath: string, ok: boolean, pageCount?: number, size?: number, error?: string}>>}
  */
 export async function renderBatch(entries, opts = {}) {
-  const launchBrowser = opts.launchBrowser || ((options) => chromium.launch(options));
+  const launchBrowser = opts.launchBrowser || ((options) => firefox.launch(options));
   const results = [];
   let browser = null;
   try {

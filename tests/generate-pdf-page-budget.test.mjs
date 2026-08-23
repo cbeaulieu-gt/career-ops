@@ -116,6 +116,11 @@ export const chromium = {
     };
   },
 };
+// generate-pdf.mjs's default (non-injected) launchBrowser now imports firefox
+// from 'playwright' (#37) rather than chromium; re-export the same working
+// stub under that name so the module-level import resolves and the real
+// launch/render/close behavior above stays exercised.
+export const firefox = chromium;
 `, 'utf-8');
 writeFileSync(input, `<!doctype html>
 <html>
