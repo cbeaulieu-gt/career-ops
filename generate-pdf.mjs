@@ -30,10 +30,15 @@
  * into a hard rejection without publishing the render as successful.
  *
  * Requires: @playwright/test (or playwright) installed.
- * Uses Chromium headless to render the HTML and produce a clean, ATS-parseable PDF.
+ * Uses Microsoft Edge (via Playwright's `chromium` browser type + the
+ * `msedge` channel) headless to render the HTML and produce a clean,
+ * ATS-parseable PDF. `page.pdf()` is only implemented on Playwright's
+ * Chromium driver — Firefox's driver throws when called — so PDF rendering
+ * must launch through the `chromium` browser type; the `msedge` channel picks
+ * Edge specifically over the bundled (license-encumbered) Chromium binary.
  */
 
-import { firefox } from 'playwright';
+import { chromium } from 'playwright';
 import { resolve, dirname, relative, sep, isAbsolute, basename } from 'path';
 import { readFile } from 'fs/promises';
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'fs';
@@ -1450,7 +1455,7 @@ export async function inlineLocalFonts(html) {
  * @returns {Promise<{outputPath: string, pageCount: number, size: number}>}
  */
 export async function renderHtmlToPdf(html, outputPath, opts = {}) {
-  const launchBrowser = opts.launchBrowser || ((options) => firefox.launch(options));
+  const launchBrowser = opts.launchBrowser || ((options) => chromium.launch({ ...options, channel: 'msedge' }));
   let browser = null;
   try {
     browser = await launchBrowser({ headless: true });
@@ -1636,7 +1641,7 @@ async function renderInPage(browser, html, outputPath, opts = {}) {
  * @returns {Promise<Array<{outputPath: string, ok: boolean, pageCount?: number, size?: number, error?: string}>>}
  */
 export async function renderBatch(entries, opts = {}) {
-  const launchBrowser = opts.launchBrowser || ((options) => firefox.launch(options));
+  const launchBrowser = opts.launchBrowser || ((options) => chromium.launch({ ...options, channel: 'msedge' }));
   const results = [];
   let browser = null;
   try {

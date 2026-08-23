@@ -1,22 +1,30 @@
-// tests/generate-pdf-firefox-engine.test.mjs — issue #37.
+// tests/generate-pdf-edge-channel.test.mjs — issue #37 (CodeRabbit follow-up).
 //
-// generate-pdf.mjs must launch headless Firefox by default, not Chromium, on
-// BOTH code paths that own the default (non-injected) launchBrowser seam:
+// Playwright's `page.pdf()` is implemented only for the Chromium browser
+// type -- Firefox's driver never implements PDF generation and throws when
+// called. #37 originally switched generate-pdf.mjs to launch Firefox, which
+// broke PDF rendering outright. The fix: launch Chromium via the `msedge`
+// channel (`chromium.launch({ ...options, channel: 'msedge' })`). This still
+// runs Microsoft Edge, not the bundled Chromium binary, but `page.pdf()`
+// works because Edge-via-channel is still the `chromium` BROWSER TYPE under
+// Playwright's API -- PDF support isn't gated to the bundled binary, it's
+// implemented generically in Playwright's Chromium driver code path.
+//
+// generate-pdf.mjs must launch Chromium with `channel: 'msedge'` by default,
+// on BOTH code paths that own the default (non-injected) launchBrowser seam:
 //   - renderHtmlToPdf (single-CV render, `node generate-pdf.mjs in.html out.pdf`)
 //   - renderBatch (`--batch=<manifest>`)
-// Both currently read `opts.launchBrowser || ((options) => chromium.launch(options))`.
-// Neither call site is exercised through the injectable opts.launchBrowser seam
-// here (that seam is what generate-pdf-batch.test.mjs and
+// A plain `chromium.launch(options)` WITHOUT `channel: 'msedge'` must NOT
+// satisfy this test -- the whole point of the fix is Edge specifically, not
+// generic (and license-encumbered) Chromium.
+//
+// Neither call site is exercised through the injectable opts.launchBrowser
+// seam here (that seam is what generate-pdf-batch.test.mjs and
 // generate-pdf-page-budget.test.mjs use to stub a *working* Chromium) — this
 // test instead spies on the real, non-injected default by stubbing the
 // `playwright` module itself, so the module-level `import { chromium } from
 // 'playwright'` the default falls back to is observable regardless of what
 // name the implementation eventually binds it under.
-//
-// The stub exports BOTH `chromium` and `firefox`, and each browser type's
-// launch() immediately throws a distinguishing marker error instead of
-// launching a real browser. Whichever marker surfaces in the script's output
-// names the browser type the real default path actually invoked.
 import { spawnSync } from 'child_process';
 import {
   copyFileSync,
@@ -28,7 +36,7 @@ import {
 import { join } from 'path';
 import { pass, fail, rmSync, linkRepoPackage, ROOT, NODE } from './helpers.mjs';
 
-console.log('\ngenerate-pdf.mjs — default browser engine (#37)');
+console.log('\ngenerate-pdf.mjs — default browser engine is Chromium via msedge channel (#37)');
 
 const outputRoot = join(ROOT, 'output');
 mkdirSync(outputRoot, { recursive: true });
@@ -36,7 +44,7 @@ mkdirSync(outputRoot, { recursive: true });
 // realpath against process.argv[1]; a symlinked output/ makes them disagree
 // and the spawned script silently no-ops (#3165), matching the other
 // generate-pdf sandboxes in this suite.
-const sandbox = realpathSync(mkdtempSync(join(outputRoot, 'firefox-engine-test-')));
+const sandbox = realpathSync(mkdtempSync(join(outputRoot, 'edge-channel-test-')));
 const script = join(sandbox, 'generate-pdf.mjs');
 
 mkdirSync(join(sandbox, 'data'), { recursive: true });
@@ -60,7 +68,16 @@ writeFileSync(join(playwrightStub, 'package.json'), JSON.stringify({
 }), 'utf-8');
 writeFileSync(join(playwrightStub, 'index.js'), `
 function makeBrowserType(name) {
-  return { async launch() { throw new Error('LAUNCH_MARKER:' + name); } };
+  return {
+    async launch(options) {
+      // Report which browser TYPE was invoked and what channel (if any) was
+      // requested, without JSON.stringify-ing the whole options object --
+      // launch options can carry values (e.g. functions) that are not
+      // guaranteed serializable, and only the channel matters here.
+      const channel = options && typeof options === 'object' ? options.channel : undefined;
+      throw new Error('LAUNCH_MARKER:' + name + ':channel=' + String(channel));
+    },
+  };
 }
 export const chromium = makeBrowserType('chromium');
 export const firefox = makeBrowserType('firefox');
@@ -80,11 +97,15 @@ function run(args) {
   return `${result.stdout || ''}${result.stderr || ''}`;
 }
 
-function assertLaunchedFirefox(output, label) {
-  if (/LAUNCH_MARKER:firefox/.test(output)) {
-    pass(`${label} launches Firefox by default`);
-  } else if (/LAUNCH_MARKER:chromium/.test(output)) {
-    fail(`${label} still launches Chromium by default:\n${output.trim()}`);
+function assertLaunchedEdgeChannel(output, label) {
+  // Anchored so 'msedge-beta' / 'msedge-dev' -- both real Playwright channels
+  // distinct from stable 'msedge' -- do not also satisfy this branch.
+  if (/LAUNCH_MARKER:chromium:channel=msedge(?![\w-])/.test(output)) {
+    pass(`${label} launches Chromium with channel: 'msedge' by default`);
+  } else if (/LAUNCH_MARKER:chromium:channel=undefined/.test(output)) {
+    fail(`${label} launches plain Chromium without the msedge channel:\n${output.trim()}`);
+  } else if (/LAUNCH_MARKER:firefox:/.test(output)) {
+    fail(`${label} still launches Firefox by default (PDF generation is unsupported there):\n${output.trim()}`);
   } else {
     fail(`${label} never reached the browser launch (test harness problem?):\n${output.trim()}`);
   }
@@ -93,7 +114,7 @@ function assertLaunchedFirefox(output, label) {
 try {
   // --- single-CV render path: renderHtmlToPdf's default launchBrowser ---
   const single = run(['solo.html', 'out/solo.pdf']);
-  assertLaunchedFirefox(single, 'generate-pdf single-CV render (renderHtmlToPdf)');
+  assertLaunchedEdgeChannel(single, 'generate-pdf single-CV render (renderHtmlToPdf)');
 
   // --- --batch path: renderBatch's default launchBrowser ---
   const manifest = join(sandbox, 'batch.json');
@@ -101,7 +122,7 @@ try {
     { input: 'solo.html', output: 'out/batch-solo.pdf' },
   ]), 'utf-8');
   const batch = run([`--batch=${manifest}`]);
-  assertLaunchedFirefox(batch, 'generate-pdf --batch render (renderBatch)');
+  assertLaunchedEdgeChannel(batch, 'generate-pdf --batch render (renderBatch)');
 } finally {
   rmSync(sandbox, { recursive: true, force: true });
 }
