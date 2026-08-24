@@ -19,7 +19,7 @@
  * which made ~220 files the fork had never touched — merely re-synced from
  * upstream via the PR merge — look locally modified, permanently stuck.
  *
- * Two properties are pinned here:
+ * Four properties are pinned here:
  *   1. (the bug) an updater commit OLDER than a since-superseded merge-base
  *      must lose to that merge-base, even when neither is an ancestor of the
  *      other.
@@ -28,6 +28,10 @@
  *      #2337-adjacent case the updater-commit preference exists for: a file
  *      the previous `apply` run itself updated must not look user-edited
  *      just because the old merge-base predates that run.
+ *   3/4. Ancestry must be checked BEFORE commit time, not after: an ancestor
+ *      with a LATER `%ct` than its own descendant must still lose, in both
+ *      the ancestor-is-updater-commit and ancestor-is-merge-base directions.
+ *      A timestamp-first implementation would get these backwards.
  */
 
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs';
@@ -150,6 +154,101 @@ const PATHS = ['x.md'];
     pass('a file the previous apply run itself updated is not flagged just because the plain merge-base predates that run');
   } else {
     fail(`#2 regression: y.md wrongly flagged as locally modified — got ${JSON.stringify(atRisk)}`);
+  }
+
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ── 3. Ancestry over timestamp, direction A: updaterCommit is an ANCESTOR of
+//    mergeBaseCandidate, but the ancestor has a LATER `%ct` than its own
+//    descendant (inverted time order). A timestamp-first implementation
+//    would pick the ancestor (later time); the real implementation must
+//    still pick the descendant, because ancestry is checked first.
+//
+//    `edited.md` is a positive control: it carries a genuine local edit made
+//    after the correct baseline commit, so it must stay flagged under either
+//    baseline choice. Without it, a baseline that silently collapsed to HEAD
+//    (or null) would also make x.md pass by accident — `edited.md` catches
+//    that failure mode, `x.md` catches the ancestry-vs-timestamp one.
+{
+  const repo = makeRepo();
+  const { dir, g, ctx } = repo;
+
+  // A: the updater commit (grep match) — deliberately committed with a
+  // LATER timestamp than its own descendant B below.
+  writeFileSync(join(dir, 'x.md'), 'v1-stale\n');
+  writeFileSync(join(dir, 'edited.md'), 'P\n');
+  commitAt(g, 'chore: auto-update system files to v1.3.0', '2026-06-01T00:00:00');
+
+  // B: direct child of A, EARLIER timestamp than A — this becomes the
+  // merge-base once upstream branches from here.
+  writeFileSync(join(dir, 'x.md'), 'v-current\n');
+  commitAt(g, 'sync point', '2026-01-01T00:00:00');
+  g('branch', 'upstream');
+
+  g('checkout', '-q', 'upstream');
+  writeFileSync(join(dir, 'x.md'), 'v-upstream\n');
+  commitAt(g, 'upstream: x.md further change', '2026-08-01T00:00:00');
+  g('checkout', '-q', 'main');
+
+  // A genuine local edit made after B (the correct baseline), so HEAD !==
+  // baseline and edited.md must survive as a positive control.
+  writeFileSync(join(dir, 'edited.md'), 'Q\n');
+  commitAt(g, 'local: tweak edited.md', '2026-01-02T00:00:00');
+
+  const atRisk = locallyModifiedSystemFiles(['x.md', 'edited.md'], 'upstream', ctx);
+  if (!atRisk.includes('x.md') && atRisk.includes('edited.md')) {
+    pass('ancestry wins over an inverted (later) updater-commit timestamp: descendant merge-base is still the baseline');
+  } else {
+    fail(`#3 regression: expected only edited.md flagged — got ${JSON.stringify(atRisk)}`);
+  }
+
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ── 4. Ancestry over timestamp, direction B: mergeBaseCandidate is an
+//    ANCESTOR of updaterCommit, but the ancestor has a LATER `%ct` than its
+//    own descendant (inverted time order). A timestamp-first implementation
+//    would pick the merge-base (later time); the real implementation must
+//    still pick updaterCommit, because ancestry is checked first.
+{
+  const repo = makeRepo();
+  const { dir, g, ctx } = repo;
+
+  // root: becomes the merge-base — deliberately committed with a LATER
+  // timestamp than the updater commit that descends from it below.
+  writeFileSync(join(dir, 'y.md'), 'v-root-old\n');
+  writeFileSync(join(dir, 'edited.md'), 'P\n');
+  commitAt(g, 'root', '2026-06-01T00:00:00');
+  g('branch', 'upstream');
+
+  g('checkout', '-q', 'upstream');
+  writeFileSync(join(dir, 'y.md'), 'v-upstream-mid\n');
+  commitAt(g, 'upstream: y.md mid', '2026-07-01T00:00:00');
+  g('checkout', '-q', 'main');
+
+  // Plain checkout+commit, not a merge — mirrors update-system.mjs's
+  // apply(), so this creates no ancestry with the upstream branch beyond
+  // root. EARLIER timestamp than root (inverted).
+  g('checkout', 'upstream', '--', 'y.md');
+  commitAt(g, 'chore: auto-update system files to v2.0.0', '2026-01-01T00:00:00');
+
+  g('checkout', '-q', 'upstream');
+  writeFileSync(join(dir, 'y.md'), 'v-upstream\n');
+  commitAt(g, 'upstream: y.md further', '2026-08-01T00:00:00');
+  g('checkout', '-q', 'main');
+
+  // A genuine local edit made after the updater commit (the correct
+  // baseline), so HEAD !== baseline and edited.md must survive as a
+  // positive control.
+  writeFileSync(join(dir, 'edited.md'), 'Q\n');
+  commitAt(g, 'local: tweak edited.md', '2026-01-02T00:00:00');
+
+  const atRisk = locallyModifiedSystemFiles(['y.md', 'edited.md'], 'upstream', ctx);
+  if (!atRisk.includes('y.md') && atRisk.includes('edited.md')) {
+    pass('ancestry wins over an inverted (later) merge-base timestamp: updater commit is still the baseline');
+  } else {
+    fail(`#4 regression: expected only edited.md flagged — got ${JSON.stringify(atRisk)}`);
   }
 
   rmSync(dir, { recursive: true, force: true });
