@@ -154,7 +154,7 @@ claude   # or codex / qwen / opencode / agy / grok — open your AI CLI here
 ```bash
 git clone https://github.com/santifer/career-ops.git
 cd career-ops && npm install
-npx playwright install chromium   # only needed for PDF generation
+npx playwright install chromium firefox   # firefox for PDF generation + liveness/JD-extraction, chromium for the Interamt scanner
 
 # 2. Check setup
 npm run doctor                     # Validates all prerequisites

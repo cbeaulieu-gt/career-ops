@@ -15,7 +15,7 @@
  * Exit code: 0 if all active, 1 if any expired or uncertain
  */
 
-import { chromium } from 'playwright';
+import { firefox } from 'playwright';
 import { readFile } from 'fs/promises';
 import {
   checkUrlLivenessWithFallback,
@@ -65,9 +65,9 @@ async function main() {
   let browser = null, page = null, headed = null;
   async function ensureBrowser() {
     if (browser) return;
-    browser = await chromium.launch({ headless: true });
+    browser = await firefox.launch({ headless: true });
     page = await newLivenessPage(browser);
-    headed = noFallback ? null : createHeadedPageProvider(chromium);
+    headed = noFallback ? null : createHeadedPageProvider(firefox);
   }
 
   let active = 0, expired = 0, uncertain = 0, viaApi = 0;

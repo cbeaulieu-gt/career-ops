@@ -2034,9 +2034,9 @@ async function apply() {
 
     // 5b. Ensure Playwright browser binary is up to date after npm install
     try {
-      execSync('npx playwright install chromium', { cwd: ROOT, timeout: PLAYWRIGHT_INSTALL_TIMEOUT_MS, stdio: 'ignore' });
+      execSync('npx playwright install chromium firefox msedge', { cwd: ROOT, timeout: PLAYWRIGHT_INSTALL_TIMEOUT_MS, stdio: 'ignore' });
     } catch {
-      console.log('playwright install skipped (run manually: npx playwright install chromium)');
+      console.log('playwright install skipped (run manually: npx playwright install chromium firefox msedge)');
     }
 
     // 6. Rebuild compiled dashboard if Go sources changed

@@ -258,9 +258,9 @@ async function main() {
     process.exit(1);
   }
 
-  let chromium;
+  let firefox;
   try {
-    ({ chromium } = await import('playwright'));
+    ({ firefox } = await import('playwright'));
   } catch {
     console.error(JSON.stringify({ error: 'playwright not installed', code: 'no_playwright' }));
     process.exit(1);
@@ -268,7 +268,7 @@ async function main() {
 
   let browser;
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await firefox.launch({ headless: true });
     const context = await browser.newContext(LIVENESS_CONTEXT_OPTIONS);
     // Block every request (main navigation, redirect hop, or subresource) to a
     // private/loopback/link-local or non-http(s) host. Guarding only the initial
