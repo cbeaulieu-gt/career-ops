@@ -30,12 +30,7 @@
  * into a hard rejection without publishing the render as successful.
  *
  * Requires: @playwright/test (or playwright) installed.
- * Uses Microsoft Edge (via Playwright's `chromium` browser type + the
- * `msedge` channel) headless to render the HTML and produce a clean,
- * ATS-parseable PDF. `page.pdf()` is only implemented on Playwright's
- * Chromium driver — Firefox's driver throws when called — so PDF rendering
- * must launch through the `chromium` browser type; the `msedge` channel picks
- * Edge specifically over the bundled (license-encumbered) Chromium binary.
+ * Uses Chromium headless to render the HTML and produce a clean, ATS-parseable PDF.
  */
 
 import { chromium } from 'playwright';
@@ -44,11 +39,13 @@ import { readFile } from 'fs/promises';
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { randomUUID } from 'node:crypto';
+import { getCareerOpsRoot } from './path-resolver.mjs';
 import { readStyleTokens, injectThemeStyle, readCvSectionOrder } from './theme-style.mjs';
 import { resolvePdfIndexPath, resolveTrackerPath, resolveWorkspaceRoot } from './tracker-utils.mjs';
+import { isMainModule } from './lib/is-main-module.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const trackerPath = resolveTrackerPath(__dirname);
+const trackerPath = resolveTrackerPath(getCareerOpsRoot());
 const workspaceRoot = resolveWorkspaceRoot(trackerPath);
 const PDF_PAGE_MARGIN = '0.6in';
 
@@ -56,7 +53,33 @@ const PDF_PAGE_MARGIN = '0.6in';
 // /var -> /private/var) is compared like-for-like by assertInsideWorkspace.
 // When CAREER_OPS_TRACKER points at another workspace, that workspace—not the
 // installed script directory—is the safe boundary for input and output.
-const __workspaceRoot = realpathSync(workspaceRoot);
+//
+// Derived at USE time, not frozen at import (#3162, root-caused occurrence 6):
+// the root reads CAREER_OPS_TRACKER, and a sibling test that legitimately sets
+// that variable for its own fixture — and correctly restores it afterwards —
+// still poisoned this module for the whole process if the import happened to
+// land inside that window. A `const` cannot un-read an env var, so the guard
+// then compared perfectly valid repo paths against another test's temp dir and
+// refused to write, intermittently and only under the full suite. Memoized on
+// the variable's own value: same cost as the const while nothing changes, and
+// self-correcting the moment it does. Same defect class as #3159.
+let __rootCache = { key: null, root: null, canonical: null };
+function refreshRootCache() {
+  const key = process.env.CAREER_OPS_TRACKER || '';
+  if (__rootCache.key !== key) {
+    // Always re-derive: falling back to the import-time const when the variable
+    // is unset would hand back the very value the poisoned import froze.
+    const root = resolveWorkspaceRoot(resolveTrackerPath(__dirname));
+    __rootCache = { key, root, canonical: realpathSync(root) };
+  }
+  return __rootCache;
+}
+// Two accessors on purpose, so each call site keeps the exact semantics it had:
+// the containment guard compares canonical forms (a symlinked ancestor must not
+// read as an escape), while the manifest/output helpers work in the lexical form
+// the rest of the module and its callers use.
+function currentWorkspaceRoot() { return refreshRootCache().root; }
+function canonicalWorkspaceRoot() { return refreshRootCache().canonical; }
 
 /**
  * Assert that an already-resolved absolute path stays inside the tracker workspace,
@@ -98,7 +121,8 @@ function assertInsideWorkspace(absPath, label) {
       + ` (${/** @type {any} */ (err)?.code || 'realpath failed'} on ${probe}): ${absPath}`,
     );
   }
-  const rel = relative(__workspaceRoot, canonical);
+  const workspace = canonicalWorkspaceRoot();
+  const rel = relative(workspace, canonical);
   if (rel === '' || rel.startsWith('..') || isAbsolute(rel)) {
     // #3162: an intermittent macOS-CI-only hit of this branch happens on paths
     // that are lexically inside the sandbox, and canonicalization SUCCEEDS
@@ -106,7 +130,7 @@ function assertInsideWorkspace(absPath, label) {
     // ancestor outright instead of asking a reader to reconstruct it.
     throw new Error(
       `${label} escapes the tracker workspace: ${absPath}`
-      + ` (workspaceRoot=${__workspaceRoot} canonical=${canonical} rel=${rel})`,
+      + ` (workspaceRoot=${workspace} canonical=${canonical} rel=${rel})`,
     );
   }
   return absPath;
@@ -238,6 +262,7 @@ const SECTION_ALIASES = new Map([
   ['awards & honours', 'awards'],
   ['skills', 'skills'],
   ['technical skills', 'skills'],
+  ['interests', 'interests'],
   // Polish — the vocabulary documented in modes/pl/README.md, plus the word-order
   // variants that turn up in practice (both "Kompetencje kluczowe" and
   // "Kluczowe kompetencje" are used for the same section).
@@ -935,7 +960,7 @@ function countRenderedPdfPages(pdfBuffer) {
  * @param {string} [rootDir] - Workspace root used as the manifest base.
  * @returns {string} Workspace-relative path using forward slashes, or an empty string.
  */
-export function workspaceRelativeManifestPath(pathValue, rootDir = workspaceRoot) {
+export function workspaceRelativeManifestPath(pathValue, rootDir = currentWorkspaceRoot()) {
   if (!pathValue) return '';
   const rel = relative(rootDir, resolve(pathValue));
   if (rel === '' || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) return '';
@@ -943,7 +968,7 @@ export function workspaceRelativeManifestPath(pathValue, rootDir = workspaceRoot
 }
 
 /** @deprecated Use workspaceRelativeManifestPath. */
-export function repoRelativeManifestPath(pathValue, rootDir = workspaceRoot) {
+export function repoRelativeManifestPath(pathValue, rootDir = currentWorkspaceRoot()) {
   return workspaceRelativeManifestPath(pathValue, rootDir);
 }
 
@@ -967,7 +992,7 @@ function nearestExistingPath(pathValue) {
  * Resolving the nearest existing ancestor catches output directories that are
  * symlinks to another location before Chromium writes through them.
  */
-export function isWorkspaceOutputPath(pathValue, rootDir = workspaceRoot) {
+export function isWorkspaceOutputPath(pathValue, rootDir = currentWorkspaceRoot()) {
   const root = resolve(rootDir);
   const candidate = resolve(pathValue);
   const lexical = relative(root, candidate);
@@ -1448,6 +1473,7 @@ export async function inlineLocalFonts(html) {
  *   baseDir?: string,
  *   reportNum?: string,
  *   inputPath?: string,
+ *   workspaceRoot?: string,
  *   maxPages?: number,
  *   strictPages?: boolean,
  *   launchBrowser?: (options: {headless: boolean}) => Promise<import('playwright').Browser>
@@ -1455,7 +1481,7 @@ export async function inlineLocalFonts(html) {
  * @returns {Promise<{outputPath: string, pageCount: number, size: number}>}
  */
 export async function renderHtmlToPdf(html, outputPath, opts = {}) {
-  const launchBrowser = opts.launchBrowser || ((options) => chromium.launch({ ...options, channel: 'msedge' }));
+  const launchBrowser = opts.launchBrowser || ((options) => chromium.launch(options));
   let browser = null;
   try {
     browser = await launchBrowser({ headless: true });
@@ -1497,9 +1523,25 @@ export async function renderHtmlToPdf(html, outputPath, opts = {}) {
  */
 async function renderInPage(browser, html, outputPath, opts = {}) {
   const format = opts.format || 'a4';
-  const baseDir = opts.baseDir || process.cwd();
+  const outputRoot = opts.workspaceRoot || workspaceRoot;
+  const requestedBaseDir = resolve(opts.baseDir || outputRoot);
+  // Temporary HTML is an output too: never let an external input path or
+  // caller-supplied baseDir choose an arbitrary directory. If the requested
+  // directory is outside the tracker workspace (or escapes through a symlink),
+  // keep the render workspace-owned while still allowing the input itself to
+  // be read.
+  const baseDir = isWorkspaceOutputPath(
+    resolve(requestedBaseDir, '.career-ops-render-anchor'),
+    outputRoot,
+  ) ? requestedBaseDir : resolve(outputRoot);
   const reportNum = opts.reportNum || '';
   const inputPath = opts.inputPath || '';
+
+  // Reject an escaping destination before creating directories, launching
+  // Chromium, or writing any renderer temporary files (#2844).
+  if (!isWorkspaceOutputPath(outputPath, outputRoot)) {
+    throw new Error(`Refusing to write the PDF outside the tracker workspace: ${outputPath}`);
+  }
 
   mkdirSync(dirname(outputPath), { recursive: true });
 
@@ -1567,7 +1609,8 @@ async function renderInPage(browser, html, outputPath, opts = {}) {
       preferCSSPageSize: true,
     });
 
-    // Write PDF
+    // Write PDF only after rendering has completed. Renderer cleanup still runs
+    // if an injected browser fails before producing a buffer.
     await writeFile(outputPath, pdfBuffer);
 
     // Read the root page-tree count so page-like text in streams is ignored.
@@ -1641,7 +1684,7 @@ async function renderInPage(browser, html, outputPath, opts = {}) {
  * @returns {Promise<Array<{outputPath: string, ok: boolean, pageCount?: number, size?: number, error?: string}>>}
  */
 export async function renderBatch(entries, opts = {}) {
-  const launchBrowser = opts.launchBrowser || ((options) => chromium.launch({ ...options, channel: 'msedge' }));
+  const launchBrowser = opts.launchBrowser || ((options) => chromium.launch(options));
   const results = [];
   let browser = null;
   try {
@@ -1677,7 +1720,7 @@ export async function renderBatch(entries, opts = {}) {
   }
 }
 
-const isMain = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+const isMain = isMainModule(import.meta.url);
 if (isMain) {
   generatePDF().catch((err) => {
     console.error('❌ PDF generation failed:', err.message);
