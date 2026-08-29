@@ -1407,6 +1407,21 @@ search_queries:
 
 tracked_companies:
 
+  # -- Authenticated provider plugins (disabled examples) --
+  # Enable the matching plugin in config/plugins.yml and add its credentials to
+  # .env before switching this entry on. Adzuna requires an explicit country;
+  # it never defaults to a market.
+  #
+  # - name: "Adzuna — AI leadership in Canada"
+  #   provider: adzuna
+  #   country: ca
+  #   what: "head of ai"
+  #   where: "Toronto"
+  #   results_per_page: 50
+  #   max_pages: 3
+  #   max_days_old: 14
+  #   enabled: false
+
   # -- AI Labs & LLM providers --
 
   - name: Anthropic

@@ -71,8 +71,9 @@ trust).
    (your release workflow opens it from your own fork). Users only ever get the
    commit we approved.
 
-Broadly-useful, low/zero-key plugins may be shipped **bundled** in `plugins/`
-(e.g. `apify`, `gmail`, `notion`). Bundled plugins are **reference seeds**:
+Broadly-useful, well-tested plugins may be shipped **bundled** in `plugins/`
+(e.g. `adzuna`, `apify`, `gmail`, `notion`). Adzuna requires `ADZUNA_APP_ID` and
+`ADZUNA_APP_KEY`. Bundled plugins are **reference seeds**:
 reviewed in-tree, always present, and a working example to copy — kept minimal
 and stable on purpose, **not** a home for ongoing feature work.
 

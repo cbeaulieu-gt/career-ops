@@ -1,0 +1,13 @@
+{
+  "id": "adzuna",
+  "name": "Adzuna",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "description": "Search Adzuna through its authenticated Jobs API.",
+  "hooks": ["provider"],
+  "requiredEnv": ["ADZUNA_APP_ID", "ADZUNA_APP_KEY"],
+  "allowedHosts": ["api.adzuna.com"],
+  "skill": "skill.md",
+  "humanInTheLoop": true,
+  "homepage": "https://developer.adzuna.com/"
+}
