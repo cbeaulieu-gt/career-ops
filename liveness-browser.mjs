@@ -461,7 +461,7 @@ export function isChallengeResult(result) {
 // across URLs. Headed Chromium needs a display, so launch can fail in headless/CI
 // environments — in that case get() returns null and callers degrade to the
 // headless result (challenge stays uncertain, never falsely expired).
-export function createHeadedPageProvider(firefox) {
+export function createHeadedPageProvider(chromium) {
   let browser = null;
   let page = null;
   let launchFailed = false;
@@ -470,7 +470,7 @@ export function createHeadedPageProvider(firefox) {
       if (page) return page;
       if (launchFailed) return null;
       try {
-        browser = await firefox.launch({ headless: false });
+        browser = await chromium.launch({ headless: false });
         const context = await browser.newContext(LIVENESS_CONTEXT_OPTIONS);
         page = await context.newPage();
         return page;
