@@ -138,7 +138,7 @@ career-ops is the first reference implementation of [the CareerOps Manifesto](ht
 | **Offer Stage**          | Contract reading companion -- clause walk plus a lawyer question list ([`offer-prep`](modes/offer-prep.md)) -- and a desired/advertised/actual salary-gap analyzer (`salary-gap.mjs`) |
 | **Follow-ups & Replies** | Follow-up cadence calculator and seeded reminders (`followup-cadence.mjs`, `followup-seed.mjs`); employer reply classification into tracker updates ([`reply-watch`](modes/reply-watch.md)) |
 | **Pattern Analysis**     | Rejection patterns and per-ATS-channel advance rates (`analyze-patterns.mjs`), lifetime funnel stats (`stats.mjs`), repost/ghost-job detection (`detect-reposts.mjs`) |
-| **Plugin System**        | Opt-in integrations (Gmail, Notion, Apify + a community registry), disabled by default -- see [docs/PLUGINS.md](docs/PLUGINS.md)        |
+| **Plugin System**        | Opt-in integrations (Gmail, Notion, Apify, Adzuna + a community registry), disabled by default -- see [docs/PLUGINS.md](docs/PLUGINS.md)        |
 | **Beyond the CV**        | Company research ([`deep`](modes/deep.md)) surfaces AI strategy, recent moves, engineering culture, and the angle your profile should take. Contact discovery ([`contacto`](modes/contacto.md)) identifies the hiring manager, recruiter, or team peer worth reaching out to and drafts a ≤300-character LinkedIn message tuned to each contact type. Formal application email drafts ([`email`](modes/email.md)) turn an evaluated report or pasted JD into a subject line, body, and attachment checklist without sending, submitting, or clicking anything. Applications get you in the queue; research gets you a conversation. |
 
 ## Quick Start
@@ -373,6 +373,12 @@ The scanner comes with **100+ companies** ready to scan and **45+ search queries
 **European:** Factorial, Attio, Tinybird, Clarity AI, Travelperk
 
 **Job boards searched:** 55+ provider modules cover ATS APIs, board-wide feeds, XML/RSS feeds, markdown feeds, and local parsers. See [Supported job boards](docs/SUPPORTED_JOB_BOARDS.md) for the full table.
+
+Authenticated sources remain opt-in. To add Adzuna, put
+`ADZUNA_APP_ID`/`ADZUNA_APP_KEY` in `.env`, enable the `adzuna` plugin, and add
+an explicit `provider: adzuna` entry with a two-letter `country` to
+`portals.yml`; see [Plugins](docs/PLUGINS.md) and the
+[Adzuna setup](plugins/adzuna/skill.md).
 
 By default `node scan.mjs` (a.k.a. `npm run scan`) trusts what each ATS feed returns. Some companies leave stale postings in their public API even after the role is closed, so those expired entries can leak into `pipeline.md`. Pass `--verify` to launch Playwright after the API pass and drop expired postings before they hit the pipeline:
 

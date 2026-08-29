@@ -20,6 +20,12 @@ plugins:
   apify:
     enabled: false
 
+  # ── adzuna (provider) ── authenticated search across Adzuna country indexes.
+  # Needs ADZUNA_APP_ID + ADZUNA_APP_KEY in .env. Fires only on a portals.yml
+  # entry with `provider: adzuna`; that entry must set an explicit country.
+  adzuna:
+    enabled: false
+
   # ── notion (export + search) ── mirror your tracker to a Notion DB / read records. (features #667/#668, ported from PR #959)
   # Needs NOTION_ACCESS_TOKEN + NOTION_PARENT_PAGE_ID in .env. Run via `node plugins.mjs run notion export`.
   # The DB is resolved by NAME ("Applications") under your parent page — no id needed here.

@@ -1,8 +1,16 @@
 # Supported Job Boards
 
-Career-Ops scans job sources through provider modules in `providers/`. Each
-non-helper `*.mjs` file maps to one supported source. Files prefixed with `_`
-are shared helpers and are not loaded as providers.
+Career-Ops scans public, zero-auth job sources through provider modules in
+`providers/`. Each non-helper `*.mjs` file maps to one supported source. Files
+prefixed with `_` are shared helpers and are not loaded as providers.
+
+Authenticated sources live in the opt-in plugin layer. The bundled **Adzuna**
+provider searches `https://api.adzuna.com/v1/api/jobs/{country}/search/{page}`
+with scoped `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` credentials. Enable the
+`adzuna` plugin, then configure `provider: adzuna` with a required two-letter
+`country`; optional `what`/`query`, `where`/`location`, `results_per_page`,
+`max_pages`, and `max_days_old` fields bound the search. See
+[`plugins/adzuna/skill.md`](../plugins/adzuna/skill.md) for setup.
 
 | Board | Type (API / Atom / RSS / parser) | Notes |
 | --- | --- | --- |
