@@ -11,7 +11,7 @@ here, so review is the real control.
   author's `career-ops-plugin-<name>` repo; users `add` it. The default, low
   burden.
 - **Bundled** — promoted into `plugins/` (shipped, auto-updated). Reserve for
-  broadly-useful, low/zero-key, well-tested plugins (how `adzuna`/`apify`/`gmail`/`notion`
+  broadly-useful, well-tested plugins (how `adzuna`/`apify`/`gmail`/`notion`
   were absorbed). Adds a maintenance commitment + a `config/plugins.example.yml`
   block + an `.env.example` entry.
 
