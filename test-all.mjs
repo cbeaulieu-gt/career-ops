@@ -14632,8 +14632,8 @@ try {
   // Bundled plugins: discovery + import coverage + static deny-list + firewall.
   const bundled = discoverPlugins([join(ROOT, 'plugins')]);
   const ids = bundled.map(p => p.id).sort().join(',');
-  if (ids === 'adzuna,apify,gmail,notion') pass('all 4 bundled reference plugins discovered (adzuna, apify, gmail, notion)');
-  else fail(`bundled plugins = "${ids}" (expected adzuna,apify,gmail,notion)`);
+  if (ids === 'adzuna,apify,gmail,jsearch,notion') pass('all 5 bundled reference plugins discovered (adzuna, apify, gmail, jsearch, notion)');
+  else fail(`bundled plugins = "${ids}" (expected adzuna,apify,gmail,jsearch,notion)`);
 
   let importOk = bundled.length > 0;
   for (const p of bundled) {

@@ -12,6 +12,15 @@ with scoped `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` credentials. Enable the
 `max_pages`, and `max_days_old` fields bound the search. See
 [`plugins/adzuna/skill.md`](../plugins/adzuna/skill.md) for setup.
 
+The bundled **JSearch** provider searches the current RapidAPI
+`https://jsearch.p.rapidapi.com/search-v2` endpoint with a scoped
+`JSEARCH_RAPIDAPI_KEY`. Enable the `jsearch` plugin, then configure an explicit
+`provider: jsearch` entry with a free-form `query`. Optional country, language,
+posting-age, employment-type, requirements, radius, publisher-exclusion,
+field-projection, geographic/remote-pass, page-budget, and result-budget fields
+bound the search. See
+[`plugins/jsearch/skill.md`](../plugins/jsearch/skill.md) for setup.
+
 | Board | Type (API / Atom / RSS / parser) | Notes |
 | --- | --- | --- |
 | 4 Day Week | API | Reads the public `https://4dayweek.io/api/jobs` JSON feed (4-day-week / reduced-hours roles). Configure with `provider: 4dayweek`; paginates `?page=N` up to `max_pages` (default 3), drops expired postings, then scanner filters apply. |
