@@ -1422,6 +1422,23 @@ tracked_companies:
   #   max_days_old: 14
   #   enabled: false
 
+  # - name: "JSearch — AI leadership in Canada"
+  #   provider: jsearch
+  #   query: "head of AI jobs in Toronto"
+  #   country: ca
+  #   language: en
+  #   date_posted: week
+  #   include_geo: true
+  #   include_remote: true
+  #   employment_types: [FULLTIME, CONTRACTOR]
+  #   job_requirements: [more_than_3_years_experience]
+  #   radius: 50
+  #   exclude_job_publishers: [Dice]
+  #   fields: [job_salary]
+  #   max_pages: 3
+  #   max_results: 50
+  #   enabled: false
+
   # -- AI Labs & LLM providers --
 
   - name: Anthropic

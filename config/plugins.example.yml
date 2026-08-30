@@ -26,6 +26,12 @@ plugins:
   adzuna:
     enabled: false
 
+  # ── jsearch (provider) ── broad job search through JSearch on RapidAPI.
+  # Needs JSEARCH_RAPIDAPI_KEY in .env. Fires only on a portals.yml entry with
+  # `provider: jsearch`; query and request budgets live on that entry.
+  jsearch:
+    enabled: false
+
   # ── notion (export + search) ── mirror your tracker to a Notion DB / read records. (features #667/#668, ported from PR #959)
   # Needs NOTION_ACCESS_TOKEN + NOTION_PARENT_PAGE_ID in .env. Run via `node plugins.mjs run notion export`.
   # The DB is resolved by NAME ("Applications") under your parent page — no id needed here.
