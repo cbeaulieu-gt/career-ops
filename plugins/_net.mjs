@@ -92,7 +92,7 @@ export async function resolveAndValidate(hostname, { allowsLocalhost = false } =
   try {
     addrs = await dnsLookup(hostname, { all: true });
   } catch (err) {
-    throw new Error(`plugin egress: cannot resolve ${hostname} — ${err.message}`);
+    throw new Error(`plugin egress: cannot resolve ${hostname} — ${err.message}`, { cause: err });
   }
   if (!addrs.length) throw new Error(`plugin egress: ${hostname} resolved to no addresses`);
   for (const { address } of addrs) {

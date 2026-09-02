@@ -452,6 +452,30 @@ test('fetch retries a network error and recovers', async () => {
   assert.equal(attempts, 2);
 });
 
+test('fetch retries a DNS error wrapped by the guarded plugin transport', async () => {
+  let attempts = 0;
+  const dnsCause = Object.assign(new Error('getaddrinfo EAI_AGAIN'), { code: 'EAI_AGAIN' });
+  const ctx = {
+    env: Object.freeze({ JSEARCH_RAPIDAPI_KEY: 'key' }),
+    sleep: async () => {},
+    fetchJson: async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw new Error(
+          'plugin egress: cannot resolve jsearch.p.rapidapi.com — getaddrinfo EAI_AGAIN',
+          { cause: dnsCause },
+        );
+      }
+      return { status: 'OK', data: { jobs: [], cursor: null } };
+    },
+  };
+
+  const jobs = await jsearch.provider.fetch({ query: 'AI jobs' }, ctx);
+
+  assert.deepEqual(jobs, []);
+  assert.equal(attempts, 2);
+});
+
 test('fetch does not retry a statusless non-network failure', async () => {
   let attempts = 0;
   const ctx = {

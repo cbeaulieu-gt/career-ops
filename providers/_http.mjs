@@ -197,6 +197,10 @@ export function isRetryableError(err) {
 /** Whether a statusless exception represents transport failure rather than parsing or policy. */
 export function isNetworkError(err) {
   if (err?.name === 'AbortError') return true;
+  const code = err?.code || err?.cause?.code;
+  if (/^(EAI_AGAIN|ECONNREFUSED|ECONNRESET|ENETUNREACH|ENOTFOUND|ETIMEDOUT|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_SOCKET)$/.test(String(code || ''))) {
+    return true;
+  }
   if (!(err instanceof TypeError)) return false;
   return err?.cause?.message !== REDIRECT_REFUSAL_CAUSE_MESSAGE;
 }
