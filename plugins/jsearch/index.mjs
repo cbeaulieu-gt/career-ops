@@ -1,9 +1,17 @@
 // @ts-check
 
 import { normalizeUrl } from '../../url-key.mjs';
+import { fetchJsonWithRetry, isNetworkError } from '../../providers/_http.mjs';
 
 const API_URL = 'https://jsearch.p.rapidapi.com/search-v2';
 const API_HOST = 'jsearch.p.rapidapi.com';
+const RETRY_POLICY = {
+  isRetryable(error) {
+    const status = error?.status;
+    return status === 429 || (typeof status === 'number' && status >= 500)
+      || (status === undefined && isNetworkError(error));
+  },
+};
 const MAX_PAGE_BUDGET = 20;
 const MAX_RESULT_BUDGET = 400;
 const REQUIRED_FIELDS = [
@@ -126,12 +134,12 @@ function normalizeResult(result) {
 
 async function fetchPage(ctx, url, key) {
   try {
-    return await ctx.fetchJson(url, {
+    return await fetchJsonWithRetry(ctx, url, {
       headers: {
         'X-RapidAPI-Key': key,
         'X-RapidAPI-Host': API_HOST,
       },
-    });
+    }, RETRY_POLICY);
   } catch (error) {
     let message = String(error?.message || error);
     for (const secret of [key, encodeURIComponent(key)]) {
@@ -140,6 +148,7 @@ async function fetchPage(ctx, url, key) {
     const safeError = new Error(message);
     if (error?.status !== undefined) safeError.status = error.status;
     if (error?.retryAfter !== undefined) safeError.retryAfter = error.retryAfter;
+    if (error?.attempts !== undefined) safeError.attempts = error.attempts;
     throw safeError;
   }
 }

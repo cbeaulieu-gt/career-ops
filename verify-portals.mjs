@@ -196,22 +196,24 @@ export function deriveSlugCandidates(name, { firstWordSuffixes = true } = {}) {
  * Classify a fetch/probe failure for scan summaries and slug diagnostics.
  *
  * @param {Error|{status?: number, name?: string, message?: string}|null|undefined} err
- * @returns {'slug_gone'|'auth'|'network'|'server'|'unknown'}
+ * @returns {'slug_gone'|'auth'|'rate_limit'|'network'|'server'|'unknown'}
  */
 export function classifyFetchError(err) {
   if (!err) return 'unknown';
-  if (err.name === 'AbortError') return 'network';
-  const msg = String(err.message || err);
-  if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|network/i.test(msg)) {
-    return 'network';
-  }
   const status = err.status;
   if (status === 404 || status === 410) return 'slug_gone';
   if (status === 401 || status === 403) return 'auth';
+  if (status === 429) return 'rate_limit';
   if (typeof status === 'number' && status >= 500) return 'server';
+  if (err.name === 'AbortError') return 'network';
+  const msg = String(err.message || err);
   if (/HTTP 404|HTTP 410/.test(msg)) return 'slug_gone';
   if (/HTTP 401|HTTP 403/.test(msg)) return 'auth';
+  if (/HTTP 429/.test(msg)) return 'rate_limit';
   if (/HTTP 5\d\d/.test(msg)) return 'server';
+  if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|network/i.test(msg)) {
+    return 'network';
+  }
   return 'unknown';
 }
 
@@ -622,6 +624,7 @@ const ICON = { live: '✅', empty: '🟡', missing: '❌', skipped: '➖' };
 const ERROR_KIND_LABEL = {
   slug_gone: 'slug not found',
   auth: 'auth blocked',
+  rate_limit: 'rate limited',
   network: 'network error',
   server: 'server error',
   unknown: 'unresolved',

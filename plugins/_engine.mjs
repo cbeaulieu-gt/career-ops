@@ -365,6 +365,15 @@ export function pluginSettings(id, cfg) {
   return rest;
 }
 
+export async function httpErrorFromResponse(res) {
+  const snippet = (await res.text().catch(() => '')).replace(/\s+/g, ' ').trim().slice(0, 300);
+  const err = new Error(snippet ? `HTTP ${res.status}: ${snippet}` : `HTTP ${res.status}`);
+  err.status = res.status;
+  const retryAfter = res.headers.get('retry-after');
+  if (retryAfter !== null) err.retryAfter = retryAfter;
+  return err;
+}
+
 /**
  * Build a guarded fetch that enforces HTTPS, an optional host allowlist, and
  * manual redirect handling that re-validates EVERY hop's host and strips
@@ -425,11 +434,7 @@ function makeGuardedFetch(allowedHosts, { allowsLocalhost = false } = {}) {
         continue;
       }
       if (!res.ok) {
-        const snippet = (await res.text().catch(() => '')).replace(/\s+/g, ' ').trim().slice(0, 300);
-        const err = new Error(snippet ? `HTTP ${res.status}: ${snippet}` : `HTTP ${res.status}`);
-        // @ts-ignore
-        err.status = res.status;
-        throw err;
+        throw await httpErrorFromResponse(res);
       }
       return res;
     }
