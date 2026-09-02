@@ -624,6 +624,7 @@ const ICON = { live: '✅', empty: '🟡', missing: '❌', skipped: '➖' };
 const ERROR_KIND_LABEL = {
   slug_gone: 'slug not found',
   auth: 'auth blocked',
+  rate_limit: 'rate limited',
   network: 'network error',
   server: 'server error',
   unknown: 'unresolved',
