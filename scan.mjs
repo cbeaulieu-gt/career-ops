@@ -2156,6 +2156,35 @@ export function computeConsecutiveFailures(healthRecords) {
   return streaks;
 }
 
+const SLUG_DIAGNOSTIC_PROVIDERS = new Set(['greenhouse', 'ashby', 'lever']);
+
+export function providerErrorRecord(company, providerId, err) {
+  const attempts = Number(err?.attempts);
+  const message = String(err?.message || err);
+  return {
+    company,
+    providerId,
+    error: Number.isInteger(attempts) && attempts > 1
+      ? `${message} after ${attempts} attempts`
+      : message,
+    kind: classifyFetchError(err),
+  };
+}
+
+export function formatPersistentFailureLines(companies, errors) {
+  const latestByCompany = new Map();
+  for (const error of errors) latestByCompany.set(error.company, error);
+  const lines = [];
+  for (const company of companies) {
+    const error = latestByCompany.get(company);
+    lines.push(`   ${company}: ${error?.error || 'latest error unavailable'}`);
+    if (error?.kind === 'slug_gone' && SLUG_DIAGNOSTIC_PROVIDERS.has(error?.providerId)) {
+      lines.push('      Run: node verify-portals.mjs to check if the ATS migrated, or update its board slug.');
+    }
+  }
+  return lines;
+}
+
 // ── Parallel fetch with concurrency limit ───────────────────────────
 
 async function parallelFetch(tasks, limit) {
@@ -2730,11 +2759,7 @@ async function main() {
         });
       }
     } catch (err) {
-      errors.push({
-        company: company.name,
-        error: err.message,
-        kind: classifyFetchError(err),
-      });
+      errors.push(providerErrorRecord(company.name, provider.id, err));
     }
   });
 
@@ -2971,8 +2996,7 @@ async function main() {
 
   if (persistentlyDead.length > 0) {
     console.log(`\n🚨 FIX NEEDED: ${persistentlyDead.length} target(s) have been unreachable for ${STREAK_THRESHOLD}+ runs:`);
-    console.log(`   ${persistentlyDead.join(', ')}`);
-    console.log(`   Run: node verify-portals.mjs to check if the ATS migrated, or update their board slugs.`);
+    for (const line of formatPersistentFailureLines(persistentlyDead, errors)) console.log(line);
   }
   if (newlyDeadSlug.length > 0) {
     const names = newlyDeadSlug.map(x => x.company).join(', ');

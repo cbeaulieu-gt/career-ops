@@ -1,6 +1,7 @@
 // @ts-check
 
 import { normalizeUrl } from '../../url-key.mjs';
+import { fetchJsonWithRetry } from '../../providers/_http.mjs';
 
 const API_URL = 'https://jsearch.p.rapidapi.com/search-v2';
 const API_HOST = 'jsearch.p.rapidapi.com';
@@ -126,7 +127,7 @@ function normalizeResult(result) {
 
 async function fetchPage(ctx, url, key) {
   try {
-    return await ctx.fetchJson(url, {
+    return await fetchJsonWithRetry(ctx, url, {
       headers: {
         'X-RapidAPI-Key': key,
         'X-RapidAPI-Host': API_HOST,
@@ -140,6 +141,7 @@ async function fetchPage(ctx, url, key) {
     const safeError = new Error(message);
     if (error?.status !== undefined) safeError.status = error.status;
     if (error?.retryAfter !== undefined) safeError.retryAfter = error.retryAfter;
+    if (error?.attempts !== undefined) safeError.attempts = error.attempts;
     throw safeError;
   }
 }
