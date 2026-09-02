@@ -7,6 +7,31 @@ import * as scanner from '../scan.mjs';
 test('HTTP 429 is classified as a rate-limit failure', () => {
   assert.equal(classifyFetchError({ status: 429 }), 'rate_limit');
   assert.equal(classifyFetchError(new Error('HTTP 429')), 'rate_limit');
+  assert.equal(
+    classifyFetchError({ status: 429, message: 'HTTP 429: network quota exceeded' }),
+    'rate_limit',
+  );
+});
+
+test('new slug diagnostics reserve ATS migration guidance for ATS providers', () => {
+  assert.equal(typeof scanner.formatNewSlugFailureLines, 'function');
+  assert.deepEqual(scanner.formatNewSlugFailureLines([
+    {
+      company: 'JSearch Software Engineer',
+      providerId: 'jsearch',
+      kind: 'slug_gone',
+      error: 'HTTP 404',
+    },
+    {
+      company: 'Acme ATS',
+      providerId: 'greenhouse',
+      kind: 'slug_gone',
+      error: 'HTTP 404',
+    },
+  ]), [
+    '   JSearch Software Engineer: HTTP 404',
+    '   Acme ATS: HTTP 404 — run: node verify-portals.mjs',
+  ]);
 });
 
 test('provider error records retain provider identity and actionable details', () => {

@@ -452,6 +452,49 @@ test('fetch retries a network error and recovers', async () => {
   assert.equal(attempts, 2);
 });
 
+test('fetch does not retry a statusless non-network failure', async () => {
+  let attempts = 0;
+  const ctx = {
+    env: Object.freeze({ JSEARCH_RAPIDAPI_KEY: 'key' }),
+    sleep: async () => {},
+    fetchJson: async () => {
+      attempts += 1;
+      throw new SyntaxError('Unexpected token in JSON');
+    },
+  };
+
+  await assert.rejects(
+    () => jsearch.provider.fetch({ query: 'AI jobs' }, ctx),
+    /Unexpected token in JSON/,
+  );
+  assert.equal(attempts, 1);
+});
+
+test('fetch honors an HTTP-date Retry-After within the bounded delay', async () => {
+  let attempts = 0;
+  const sleepCalls = [];
+  const ctx = {
+    env: Object.freeze({ JSEARCH_RAPIDAPI_KEY: 'key' }),
+    sleep: async (ms) => sleepCalls.push(ms),
+    fetchJson: async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        const error = new Error('HTTP 429');
+        error.status = 429;
+        error.retryAfter = new Date(Date.now() + 60_000).toUTCString();
+        throw error;
+      }
+      return { status: 'OK', data: { jobs: [], cursor: null } };
+    },
+  };
+
+  const jobs = await jsearch.provider.fetch({ query: 'AI jobs' }, ctx);
+
+  assert.deepEqual(jobs, []);
+  assert.equal(attempts, 2);
+  assert.deepEqual(sleepCalls, [32_000]);
+});
+
 test('radius is included only when explicitly set to a non-negative number', async () => {
   const radii = [
     { value: null, expected: null },

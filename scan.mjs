@@ -2185,6 +2185,15 @@ export function formatPersistentFailureLines(companies, errors) {
   return lines;
 }
 
+export function formatNewSlugFailureLines(errors) {
+  return errors.map((error) => {
+    const base = `   ${error.company}: ${error.error || 'latest error unavailable'}`;
+    return SLUG_DIAGNOSTIC_PROVIDERS.has(error?.providerId)
+      ? `${base} — run: node verify-portals.mjs`
+      : base;
+  });
+}
+
 // ── Parallel fetch with concurrency limit ───────────────────────────
 
 async function parallelFetch(tasks, limit) {
@@ -2999,8 +3008,8 @@ async function main() {
     for (const line of formatPersistentFailureLines(persistentlyDead, errors)) console.log(line);
   }
   if (newlyDeadSlug.length > 0) {
-    const names = newlyDeadSlug.map(x => x.company).join(', ');
-    console.log(`\n⚠️  ${newlyDeadSlug.length} target(s) unreachable (slug?): ${names} — run: node verify-portals.mjs`);
+    console.log(`\n⚠️  ${newlyDeadSlug.length} target(s) unreachable:`);
+    for (const line of formatNewSlugFailureLines(newlyDeadSlug)) console.log(line);
   }
   if (emptyTargets.length > 0) {
     console.log(`🟡 ${emptyTargets.length} target(s) live but empty: ${emptyTargets.join(', ')}`);

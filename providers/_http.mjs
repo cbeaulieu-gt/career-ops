@@ -194,6 +194,13 @@ export function isRetryableError(err) {
   return status === undefined; // network error / timeout / abort — no status set
 }
 
+/** Whether a statusless exception represents transport failure rather than parsing or policy. */
+export function isNetworkError(err) {
+  if (err?.name === 'AbortError') return true;
+  if (!(err instanceof TypeError)) return false;
+  return err?.cause?.message !== REDIRECT_REFUSAL_CAUSE_MESSAGE;
+}
+
 /**
  * Bounded retry on transient failures, around any request.
  *
@@ -220,10 +227,10 @@ export function isRetryableError(err) {
  *
  * @param {() => Promise<any>} request - Performs one attempt.
  * @param {{sleep?: Function}} ctx - Transport context (may supply a test clock).
- * @param {{retries?: number, baseDelayMs?: number, maxDelayMs?: number}} [policy]
+ * @param {{retries?: number, baseDelayMs?: number, maxDelayMs?: number, isRetryable?: Function}} [policy]
  */
 async function withRetry(request, ctx, policy = {}) {
-  const { retries, baseDelayMs, maxDelayMs } = { ...RETRY_DEFAULTS, ...policy };
+  const { retries, baseDelayMs, maxDelayMs, isRetryable = isRetryableError } = { ...RETRY_DEFAULTS, ...policy };
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -235,7 +242,7 @@ async function withRetry(request, ctx, policy = {}) {
       // which would replace the real rejection with an unrelated TypeError
       // right here in the catch, before any caller sees it.
       if (err !== null && (typeof err === 'object' || typeof err === 'function')) err.attempts = attempt + 1;
-      if (attempt === retries || !isRetryableError(err)) throw err;
+      if (attempt === retries || !isRetryable(err)) throw err;
       // Cap the backoff at maxDelayMs MINUS the jitter, so the jittered total
       // still honours the policy limit. Clamping the sum instead would erase
       // the jitter exactly at the cap — where every retry has converged on the
@@ -263,7 +270,7 @@ async function withRetry(request, ctx, policy = {}) {
  * @param {{fetchJson: Function, sleep?: Function}} ctx - Transport context.
  * @param {string} url - Absolute URL.
  * @param {object} [opts] - Passed through to ctx.fetchJson.
- * @param {{retries?: number, baseDelayMs?: number, maxDelayMs?: number}} [policy]
+ * @param {{retries?: number, baseDelayMs?: number, maxDelayMs?: number, isRetryable?: Function}} [policy]
  * @returns {Promise<any>} Parsed JSON.
  */
 export async function fetchJsonWithRetry(ctx, url, opts = {}, policy = {}) {
@@ -286,7 +293,7 @@ export async function fetchJsonWithRetry(ctx, url, opts = {}, policy = {}) {
  * @param {{fetchText: Function, sleep?: Function}} ctx - Transport context.
  * @param {string} url - Absolute URL.
  * @param {object} [opts] - Passed through to ctx.fetchText.
- * @param {{retries?: number, baseDelayMs?: number, maxDelayMs?: number}} [policy]
+ * @param {{retries?: number, baseDelayMs?: number, maxDelayMs?: number, isRetryable?: Function}} [policy]
  * @returns {Promise<string>} Response body.
  */
 export async function fetchTextWithRetry(ctx, url, opts = {}, policy = {}) {

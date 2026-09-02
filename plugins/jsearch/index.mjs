@@ -1,10 +1,17 @@
 // @ts-check
 
 import { normalizeUrl } from '../../url-key.mjs';
-import { fetchJsonWithRetry } from '../../providers/_http.mjs';
+import { fetchJsonWithRetry, isNetworkError } from '../../providers/_http.mjs';
 
 const API_URL = 'https://jsearch.p.rapidapi.com/search-v2';
 const API_HOST = 'jsearch.p.rapidapi.com';
+const RETRY_POLICY = {
+  isRetryable(error) {
+    const status = error?.status;
+    return status === 429 || (typeof status === 'number' && status >= 500)
+      || (status === undefined && isNetworkError(error));
+  },
+};
 const MAX_PAGE_BUDGET = 20;
 const MAX_RESULT_BUDGET = 400;
 const REQUIRED_FIELDS = [
@@ -132,7 +139,7 @@ async function fetchPage(ctx, url, key) {
         'X-RapidAPI-Key': key,
         'X-RapidAPI-Host': API_HOST,
       },
-    });
+    }, RETRY_POLICY);
   } catch (error) {
     let message = String(error?.message || error);
     for (const secret of [key, encodeURIComponent(key)]) {
