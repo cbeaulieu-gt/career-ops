@@ -29,7 +29,7 @@ test('fetch builds filtered Search V2 requests and follows response cursors', as
     {
       status: 'OK',
       data: {
-        jobs: [{
+        jobs: Array.from({ length: 10 }, () => ({
           job_id: 'job-1',
           job_title: 'Machine Learning Lead',
           employer_name: 'Example AI',
@@ -39,7 +39,7 @@ test('fetch builds filtered Search V2 requests and follows response cursors', as
           job_description: 'Lead the applied ML group.',
           job_is_remote: true,
           job_posted_at_timestamp: 1787918400,
-        }],
+        })),
         cursor: 'cursor-page-2',
       },
     },
@@ -89,11 +89,9 @@ test('fetch builds filtered Search V2 requests and follows response cursors', as
     'https://jsearch.p.rapidapi.com/search-v2?query=AI+leadership+jobs+in+Toronto&num_pages=1&country=ca&language=en&date_posted=week&employment_types=FULLTIME%2CCONTRACTOR&job_requirements=more_than_3_years_experience%2Cno_degree&radius=50&exclude_job_publishers=Dice%2CMonster&fields=job_salary%2Cjob_id%2Cjob_title%2Cemployer_name%2Cjob_publisher%2Cjob_apply_link%2Capply_options%2Cjob_google_link%2Cjob_location%2Cjob_description%2Cjob_is_remote%2Cjob_posted_at_timestamp%2Cjob_posted_at_datetime_utc',
   );
   assert.equal(requests[1].url.searchParams.get('cursor'), 'cursor-page-2');
-  assert.deepEqual(requests[0].options, {
-    headers: {
-      'X-RapidAPI-Key': 'scoped-key',
-      'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
-    },
+  assert.deepEqual(requests[0].options.headers, {
+    'X-RapidAPI-Key': 'scoped-key',
+    'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
   });
   assert.deepEqual(jobs, [
     {
@@ -119,6 +117,35 @@ test('fetch builds filtered Search V2 requests and follows response cursors', as
       postedAt: Date.parse('2026-08-27T09:00:00Z'),
     },
   ]);
+});
+
+test('fetch skips the cursor when a raw page contains fewer than ten jobs', async () => {
+  let requests = 0;
+  const ctx = {
+    env: Object.freeze({ JSEARCH_RAPIDAPI_KEY: 'key' }),
+    fetchJson: async () => {
+      requests += 1;
+      return {
+        status: 'OK',
+        data: {
+          jobs: Array.from({ length: 9 }, () => ({
+            job_id: 'underfilled-page-job',
+            job_title: 'Underfilled Page Result',
+            job_apply_link: 'https://jobs.example.com/underfilled-page-job',
+          })),
+          cursor: 'unproductive-cursor',
+        },
+      };
+    },
+  };
+
+  const jobs = await jsearch.provider.fetch({
+    query: 'AI jobs',
+    max_pages: 2,
+  }, ctx);
+
+  assert.equal(requests, 1);
+  assert.deepEqual(jobs.map((job) => job.id), ['underfilled-page-job']);
 });
 
 test('fetch runs independently configurable geographic and remote-only passes', async () => {
@@ -257,18 +284,17 @@ test('duplicate rows do not consume the unique-result budget within a pass', asy
         return {
           status: 'OK',
           data: {
-            jobs: [
-              {
+            jobs: Array.from({ length: 10 }, (_, index) => (
+              index % 2 === 0 ? {
                 job_id: 'duplicate',
                 job_title: 'Duplicate',
                 job_apply_link: 'https://jobs.example.com/duplicate?utm_source=one',
-              },
-              {
+              } : {
                 job_id: 'duplicate',
                 job_title: 'Duplicate Again',
                 job_apply_link: 'https://jobs.example.com/duplicate?utm_source=two',
-              },
-            ],
+              }
+            )),
             cursor: 'page-two',
           },
         };
@@ -321,11 +347,11 @@ test('duplicates from the remote pass do not consume its remaining unique-result
         return {
           status: 'OK',
           data: {
-            jobs: [{
+            jobs: Array.from({ length: 10 }, () => ({
               job_id: 'shared',
               job_title: 'Shared Duplicate',
               job_apply_link: 'https://jobs.example.com/shared?utm_source=remote',
-            }],
+            })),
             cursor: 'remote-page-two',
           },
         };
@@ -652,13 +678,13 @@ test('fetch enforces the twenty-page safety ceiling', async () => {
       return {
         status: 'OK',
         data: {
-          jobs: [{
+          jobs: Array.from({ length: 10 }, () => ({
             job_id: `job-${requests}`,
             job_title: `Role ${requests}`,
             employer_name: 'Example',
             job_publisher: 'Example Careers',
             job_apply_link: `https://jobs.example.com/${requests}`,
-          }],
+          })),
           cursor: `cursor-${requests + 1}`,
         },
       };

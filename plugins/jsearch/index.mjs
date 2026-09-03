@@ -5,6 +5,8 @@ import { fetchJsonWithRetry, isNetworkError } from '../../providers/_http.mjs';
 
 const API_URL = 'https://jsearch.p.rapidapi.com/search-v2';
 const API_HOST = 'jsearch.p.rapidapi.com';
+// Controlled probes found JSearch returns at most 10 raw jobs per cursor page (#50).
+const OBSERVED_PAGE_SIZE = 10;
 const RETRY_POLICY = {
   isRetryable(error) {
     const status = error?.status;
@@ -176,6 +178,7 @@ async function fetchPass(entry, ctx, key, pageBudget, resultBudget, remoteOnly, 
       state.jobs.push(normalized);
       if (state.jobs.length >= resultBudget) return;
     }
+    if (payload.data.jobs.length < OBSERVED_PAGE_SIZE) break;
     cursor = stringValue(payload.data.cursor);
     if (!cursor) break;
   }
