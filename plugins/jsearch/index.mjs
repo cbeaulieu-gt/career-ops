@@ -5,6 +5,7 @@ import { fetchJsonWithRetry, isNetworkError } from '../../providers/_http.mjs';
 
 const API_URL = 'https://jsearch.p.rapidapi.com/search-v2';
 const API_HOST = 'jsearch.p.rapidapi.com';
+const REQUEST_TIMEOUT_MS = 30_000;
 const RETRY_POLICY = {
   isRetryable(error) {
     const status = error?.status;
@@ -135,6 +136,7 @@ function normalizeResult(result) {
 async function fetchPage(ctx, url, key) {
   try {
     return await fetchJsonWithRetry(ctx, url, {
+      timeoutMs: REQUEST_TIMEOUT_MS,
       headers: {
         'X-RapidAPI-Key': key,
         'X-RapidAPI-Host': API_HOST,

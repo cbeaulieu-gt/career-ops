@@ -90,6 +90,7 @@ test('fetch builds filtered Search V2 requests and follows response cursors', as
   );
   assert.equal(requests[1].url.searchParams.get('cursor'), 'cursor-page-2');
   assert.deepEqual(requests[0].options, {
+    timeoutMs: 30_000,
     headers: {
       'X-RapidAPI-Key': 'scoped-key',
       'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
@@ -119,6 +120,46 @@ test('fetch builds filtered Search V2 requests and follows response cursors', as
       postedAt: Date.parse('2026-08-27T09:00:00Z'),
     },
   ]);
+});
+
+test('fetch allows a slow cursor page to complete within the JSearch deadline', async () => {
+  const ctx = {
+    env: Object.freeze({ JSEARCH_RAPIDAPI_KEY: 'key' }),
+    sleep: async () => {},
+    fetchJson: async (url, options) => {
+      const requestUrl = new URL(url);
+      if (requestUrl.searchParams.has('cursor')) {
+        if (!Number.isFinite(options?.timeoutMs) || options.timeoutMs < 25_000) {
+          throw new DOMException('The operation was aborted', 'AbortError');
+        }
+        return {
+          status: 'OK',
+          data: {
+            jobs: [{
+              job_id: 'slow-page-job',
+              job_title: 'Slow Cursor Result',
+              job_apply_link: 'https://jobs.example.com/slow-page-job',
+            }],
+            cursor: null,
+          },
+        };
+      }
+      return {
+        status: 'OK',
+        data: {
+          jobs: [],
+          cursor: 'slow-cursor',
+        },
+      };
+    },
+  };
+
+  const jobs = await jsearch.provider.fetch({
+    query: 'AI jobs',
+    max_pages: 2,
+  }, ctx);
+
+  assert.deepEqual(jobs.map((job) => job.id), ['slow-page-job']);
 });
 
 test('fetch runs independently configurable geographic and remote-only passes', async () => {
