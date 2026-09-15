@@ -382,8 +382,8 @@ commit before enabling them. Adzuna uses `ADZUNA_APP_ID` and
 `ADZUNA_APP_KEY`; JSearch uses `JSEARCH_RAPIDAPI_KEY`. Add an explicit
 `provider: adzuna` or `provider: jsearch` entry to `portals.yml`; see
 [Plugins](docs/PLUGINS.md), the
-[Adzuna plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna), and
-[JSearch plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch).
+[Adzuna plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5), and
+[JSearch plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/d3d2cbcfa98e3b1f7d62c9cef3b154394c966926).
 
 By default `node scan.mjs` (a.k.a. `npm run scan`) trusts what each ATS feed returns. Some companies leave stale postings in their public API even after the role is closed, so those expired entries can leak into `pipeline.md`. Pass `--verify` to launch Playwright after the API pass and drop expired postings before they hit the pipeline:
 

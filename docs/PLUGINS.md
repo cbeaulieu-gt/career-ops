@@ -81,8 +81,8 @@ and stable on purpose, **not** a home for ongoing feature work.
 This fork keeps its authenticated Adzuna and JSearch providers outside the
 system layer as standalone plugins:
 
-- [career-ops-plugin-adzuna](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna)
-- [career-ops-plugin-jsearch](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch)
+- [career-ops-plugin-adzuna](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5)
+- [career-ops-plugin-jsearch](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/d3d2cbcfa98e3b1f7d62c9cef3b154394c966926)
 
 They are not bundled and are not listed in the career-ops registry. Installers
 must therefore name the repository and an exact 40-character commit, review the
