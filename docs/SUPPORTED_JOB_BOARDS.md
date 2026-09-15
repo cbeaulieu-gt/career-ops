@@ -4,22 +4,25 @@ Career-Ops scans public, zero-auth job sources through provider modules in
 `providers/`. Each non-helper `*.mjs` file maps to one supported source. Files
 prefixed with `_` are shared helpers and are not loaded as providers.
 
-Authenticated sources live in the opt-in plugin layer. The bundled **Adzuna**
+Authenticated sources live in the opt-in plugin layer. The unlisted standalone
+**Adzuna** plugin
 provider searches `https://api.adzuna.com/v1/api/jobs/{country}/search/{page}`
 with scoped `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` credentials. Enable the
 `adzuna` plugin, then configure `provider: adzuna` with a required two-letter
 `country`; optional `what`/`query`, `where`/`location`, `results_per_page`,
-`max_pages`, and `max_days_old` fields bound the search. See
-[`plugins/adzuna/skill.md`](../plugins/adzuna/skill.md) for setup.
+`max_pages`, and `max_days_old` fields bound the search. See the
+[pinned direct-install instructions](PLUGINS.md#unlisted-direct-installs-adzuna-and-jsearch)
+and the [reviewed Adzuna source](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5).
 
-The bundled **JSearch** provider searches the current RapidAPI
+The unlisted standalone **JSearch** plugin searches the current RapidAPI
 `https://jsearch.p.rapidapi.com/search-v2` endpoint with a scoped
 `JSEARCH_RAPIDAPI_KEY`. Enable the `jsearch` plugin, then configure an explicit
 `provider: jsearch` entry with a free-form `query`. Optional country, language,
 posting-age, employment-type, requirements, radius, publisher-exclusion,
 field-projection, geographic/remote-pass, page-budget, and result-budget fields
-bound the search. See
-[`plugins/jsearch/skill.md`](../plugins/jsearch/skill.md) for setup.
+bound the search. See the
+[pinned direct-install instructions](PLUGINS.md#unlisted-direct-installs-adzuna-and-jsearch)
+and the [reviewed JSearch source](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/d3d2cbcfa98e3b1f7d62c9cef3b154394c966926).
 
 | Board | Type (API / Atom / RSS / parser) | Notes |
 | --- | --- | --- |

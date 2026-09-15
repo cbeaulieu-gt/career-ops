@@ -20,13 +20,15 @@ plugins:
   apify:
     enabled: false
 
-  # ── adzuna (provider) ── authenticated search across Adzuna country indexes.
+  # ── adzuna (direct-installed provider) ── install the unlisted standalone
+  # plugin first; see docs/PLUGINS.md. Searches Adzuna country indexes.
   # Needs ADZUNA_APP_ID + ADZUNA_APP_KEY in .env. Fires only on a portals.yml
   # entry with `provider: adzuna`; that entry must set an explicit country.
   adzuna:
     enabled: false
 
-  # ── jsearch (provider) ── broad job search through JSearch on RapidAPI.
+  # ── jsearch (direct-installed provider) ── install the unlisted standalone
+  # plugin first; see docs/PLUGINS.md. Searches JSearch through RapidAPI.
   # Needs JSEARCH_RAPIDAPI_KEY in .env. Fires only on a portals.yml entry with
   # `provider: jsearch`; query and request budgets live on that entry.
   jsearch:
