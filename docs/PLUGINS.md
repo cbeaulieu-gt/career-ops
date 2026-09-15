@@ -72,11 +72,33 @@ trust).
    commit we approved.
 
 Broadly-useful, well-tested plugins may be shipped **bundled** in `plugins/`
-(e.g. `adzuna`, `apify`, `gmail`, `jsearch`, `notion`). Adzuna requires
-`ADZUNA_APP_ID` and `ADZUNA_APP_KEY`; JSearch requires
-`JSEARCH_RAPIDAPI_KEY`. Bundled plugins are **reference seeds**:
+(`apify`, `gmail`, `h1b-sponsor`, and `notion`). Bundled plugins are **reference seeds**:
 reviewed in-tree, always present, and a working example to copy — kept minimal
 and stable on purpose, **not** a home for ongoing feature work.
+
+### Unlisted direct installs: Adzuna and JSearch
+
+This fork keeps its authenticated Adzuna and JSearch providers outside the
+system layer as standalone plugins:
+
+- [career-ops-plugin-adzuna](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna)
+- [career-ops-plugin-jsearch](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch)
+
+They are not bundled and are not listed in the career-ops registry. Installers
+must therefore name the repository and an exact 40-character commit, review the
+capability card, and opt in explicitly:
+
+```bash
+node plugins.mjs add cbeaulieu-gt/career-ops-plugin-adzuna --sha 9bf2b2def66091e5d655a838ba68df53ca36f1f5
+node plugins.mjs enable adzuna --confirm
+
+node plugins.mjs add cbeaulieu-gt/career-ops-plugin-jsearch --sha d3d2cbcfa98e3b1f7d62c9cef3b154394c966926
+node plugins.mjs enable jsearch --confirm
+```
+
+These commits are the v1.0.0 releases. Direct installation records the repo,
+commit, file hashes, and accepted capability surface in the user's ignored
+`plugins.lock`; the installed code lives in ignored `plugins.local/`.
 
 ### Improving a bundled plugin → publish a maintained successor
 
