@@ -1536,12 +1536,22 @@ const ADD_ARGV_BUDGET = 8000;
  * update on disk, staged, uncommitted — and repeats it on every later release.
  *
  * Callers must pass files, not directory pathspecs — see expandToShippedFiles.
+ * Exact exclusion pathspecs may accompany those files; resolve them before
+ * `--literal-pathspecs` makes Git treat every remaining entry as a filename.
  *
  * @param {string[]} paths - Repo-relative FILE paths to stage.
  * @param {{git?: Function}} [ctx] - Test seam; defaults to the ROOT-bound runner.
  */
 export function addPaths(paths, ctx = {}) {
-  if (paths.length === 0) return;
+  const excluded = new Set(
+    paths
+      .filter((path) => path.startsWith(EXCLUDE_PATHSPEC_PREFIX))
+      .map((path) => path.slice(EXCLUDE_PATHSPEC_PREFIX.length)),
+  );
+  const files = paths.filter(
+    (path) => !path.startsWith(EXCLUDE_PATHSPEC_PREFIX) && !excluded.has(path),
+  );
+  if (files.length === 0) return;
   // Enforced, not merely documented. Two call sites feed this function and both
   // build their list from SYSTEM_PATHS, so "callers must pass files" is exactly
   // the kind of precondition that holds until someone adds a third caller — and
@@ -1551,7 +1561,7 @@ export function addPaths(paths, ctx = {}) {
   // loop meant a directory in a late batch was caught only after earlier batches
   // had already been added — the refusal would report a problem it had partly
   // committed to.
-  rejectDirectories(paths, ctx.root || ROOT);
+  rejectDirectories(files, ctx.root || ROOT);
   const runGit = ctx.git || git;
   let batch = [];
   let budget = 0;
@@ -1564,7 +1574,7 @@ export function addPaths(paths, ctx = {}) {
     batch = [];
     budget = 0;
   };
-  for (const path of paths) {
+  for (const path of files) {
     // A single path wider than the budget still goes out on its own.
     if (batch.length > 0 && budget + path.length + 1 > ADD_ARGV_BUDGET) flush();
     batch.push(path);

@@ -13,17 +13,37 @@
  */
 
 import { existsSync, readFileSync } from 'fs';
-import { isAbsolute, join, dirname, basename } from 'path';
-import { fileURLToPath } from 'url';
+import { isAbsolute, join, basename } from 'path';
 import { isMainModule } from './lib/is-main-module.mjs';
+import { getCareerOpsRoot } from './path-resolver.mjs';
 
-const ROOT = dirname(fileURLToPath(import.meta.url));
-const DEFAULT_SOURCES = ['cv.md', 'article-digest.md'];
-const DEFAULT_CONFIG = join(ROOT, 'config', 'cv-facts.json');
+// Two roots, because this gate compares user-layer files against a user-layer
+// config and previously resolved neither from the user's data root.
+//
+// cv.md and article-digest.md are the Source-of-Truth Boundary's primary files.
+// As bare relative strings they resolved against process.cwd(), so from any
+// directory that is not the data root the gate read NO sources — and a fact
+// check with no sources does not fail open quietly, it fails LOUD and WRONG:
+// every quantified claim in the generated CV is reported as "absent from
+// sources", including claims copied verbatim out of the user's own cv.md.
+//
+// config/cv-facts.json is user-layer too (it holds the user's forbidden and
+// advisory phrases). Resolved from the CODE root it was simply absent for any
+// configured data root, and the gate said so and carried on:
+//
+//     ⚠️  fact-gate config not found: <CHECKOUT>/config/cv-facts.json
+//         — forbidden/advisory phrase checks did not run.
+//
+// So one invocation both invented failures and silently skipped half its
+// checks. --source and --config still override; only the defaults move.
+const DATA_ROOT = getCareerOpsRoot();
+const DEFAULT_SOURCES = [join(DATA_ROOT, 'cv.md'), join(DATA_ROOT, 'article-digest.md')];
+const DEFAULT_CONFIG = join(DATA_ROOT, 'config', 'cv-facts.json');
 const TOOL_PROSE_WORDS = new Set([
   'a', 'an', 'and', 'at', 'built', 'by', 'containerized', 'deployment',
-  'deployments', 'for', 'from', 'in', 'of', 'on', 'production', 'project',
-  'team', 'the', 'to', 'using', 'with',
+  'deployments', 'delivery', 'diagnosing', 'efficiency', 'feedback', 'for', 'from', 'improve',
+  'improving', 'in', 'of', 'on', 'on-time', 'operations', 'production', 'project',
+  'recurring', 'resolving', 'submission', 'team', 'the', 'to', 'using', 'with',
 ]);
 const TOOL_PHRASE_PATTERN = /^(?=.{1,80}$)[\p{L}\p{N}.][\p{L}\p{N}+#./-]*(?:\s+[\p{L}\p{N}.][\p{L}\p{N}+#./-]*){0,2}$/u;
 const DELEGATED_PARTY_RE = /\b(?:vendors?|agenc(?:y|ies)|contractors?|consultanc(?:y|ies)|consultants?|external teams?|outsourc(?:ed|ing)|implementation partners?)\b/i;
@@ -231,6 +251,36 @@ export function stripMarkup(text, { keepLineBreaks = false } = {}) {
     .replace(/<\/?(?:li|p|div|tr|h[1-6]|section|article|ul|ol|table|br)\b[^>\n]*>/gi, '. ')
     .replace(/<\/?[a-zA-Z][^>\n]*>/g, ' ')
     .replace(/\\[a-zA-Z]+\*?(?:\[[^\]]*\])?(?:\{([^}]*)\})?/g, ' $1 ')
+    // Markdown emphasis (`**bold**`, `__bold__`, `*italic*`) — the house style
+    // used to bold nearly every metric in cv.md/article-digest.md. A closing
+    // marker sitting directly against the number severed the number-noun
+    // adjacency the claim patterns require, so a bolded metric quoted verbatim
+    // from the source was reported as "invented" (#4085). Requires
+    // non-whitespace touching each marker (the standard markdown emphasis
+    // rule), so a lone unpaired asterisk — a footnote marker like "40%*", or
+    // two of them on one line — is left alone rather than paired into a false
+    // span. Single underscores are load-bearing in these sources (snake_case,
+    // env_keys.json, file paths), so only a DOUBLED underscore is stripped.
+    // Must run AFTER the LaTeX pass above: a LaTeX star-variant command
+    // (`\section*{...}`) leaves a single bare `*` behind if consumed first,
+    // and that stray star can pair with an unrelated later `*...*` span and
+    // mangle both. Bold before italic, so the italic pass never splits a
+    // `**...**` run in two. Bold may span a wrapped line (`keepLineBreaks`);
+    // italic is deliberately kept single-line, to stay conservative about the
+    // more collision-prone single-asterisk form.
+    //
+    // Deliberately NOT letter/digit-boundary-guarded (e.g. `(?<![\p{L}\p{N}_])`)
+    // even though that would preserve literal patterns like `2*3*4` or
+    // `foo*bar*baz`: a LaTeX star command directly abutting the next word
+    // (`\section*{Foo}and*emphasis*done` -> `Foo and*emphasis*done`) leaves
+    // the italic span's markers touching letters on both sides, which such a
+    // guard rejects — turning real emphasis back into a false negative. The
+    // covered CV/article-digest sources never contain literal multiplication
+    // asterisks, so this trades an untested hypothetical for a real,
+    // regression-tested case (see the LaTeX star-command test below).
+    .replace(/\*\*(\S(?:[\s\S]*?\S)?)\*\*/g, ' $1 ')
+    .replace(/__(\S(?:[\s\S]*?\S)?)__/g, ' $1 ')
+    .replace(/\*(\S(?:[^\n*]*\S)?)\*/g, ' $1 ')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     // keepLineBreaks preserves a newline as a CLAUSE boundary for the plan-horizon
@@ -280,19 +330,57 @@ function normalizeFact(value) {
   return normalizeClaim(value).replace(/[.;:,]+$/g, '').trim();
 }
 
-/** Keep likely technology names while dropping ordinary prose fragments. */
-function isLikelyTool(value) {
-  const normalized = normalizeFact(value);
-  const words = normalized.split(' ');
-  if (!normalized || words.length > 3 || words.some(word => TOOL_PROSE_WORDS.has(word))) return false;
-  // The surrounding grammar ("using", "built with", "tech stack") already
-  // asserts that each short fragment is a tool. Requiring capitalization or a
-  // hand-maintained allowlist makes unknown lowercase tools bypass the gate.
-  return TOOL_PHRASE_PATTERN.test(value.trim());
+/** Whether a raw (unnormalized) tool fragment looks like a real product name: Title Case, or carries a digit/version token (e.g. "n8n", "Python 3.11", "GPT-4"). */
+function looksToolShaped(rawValue) {
+  const trimmed = String(rawValue).trim();
+  if (!trimmed) return false;
+  // A digit anywhere marks a version or a name built on one: "n8n", "GPT-4",
+  // "Python 3.11".
+  if (/\d/.test(trimmed)) return true;
+  // Every word capitalised: "React", "Google Cloud", "Node.js". A single
+  // lowercase connector inside an otherwise-capitalised phrase never reaches
+  // here — TOOL_PHRASE_PATTERN caps a tool fragment at 3 words and the
+  // surrounding split on `and`/`with`/`in` already removes connectors.
+  return trimmed.split(/\s+/).every(word => /^[\p{Lu}]/u.test(word));
 }
 
-/** Extract explicitly asserted employer, title, and tool claims from text. */
-export function factClaims(text) {
+/**
+ * Keep likely technology names while dropping ordinary prose fragments.
+ *
+ * A fragment that does not look tool-shaped (see `looksToolShaped`) is kept
+ * anyway when it is already an exact substring of the source files: a real
+ * lowercase tool name ("kubernetes", "n8n") a user genuinely used and listed
+ * in cv.md must still pass, and rejecting it on casing alone would just trade
+ * one false-positive class for another.
+ *
+ * A fragment that is neither tool-shaped nor source-backed is still retained
+ * by default, preserving the gate's fail-closed behavior for lowercase names.
+ * Only exact words observed as prose false positives are rejected through
+ * `TOOL_PROSE_WORDS`; morphological suffixes are deliberately not used
+ * because real products such as Spring, Unity, and Processing share them.
+ */
+function isLikelyTool(value, sourceNormalized) {
+  const normalized = normalizeFact(value);
+  const words = normalized.split(' ');
+  if (!normalized || words.length > 3) return false;
+  if (!TOOL_PHRASE_PATTERN.test(value.trim())) return false;
+  if (looksToolShaped(value)) return true;
+  if (sourceNormalized != null && sourceContainsFact(sourceNormalized, normalized)) return true;
+  return !words.some(word => TOOL_PROSE_WORDS.has(word));
+}
+
+/**
+ * Extract explicitly asserted employer, title, and tool claims from text.
+ *
+ * `sourceNormalized` (from `normalizeFact(stripMarkup(sourceText))`, as
+ * `verifyFacts` already builds it) is optional and used only to let a
+ * lowercase-but-genuine tool fragment through `isLikelyTool` when it is
+ * already backed by a source file — see that function's doc comment. Callers
+ * that omit it (existing direct callers, tests) get the same conservative
+ * shape-only behaviour as before: a tool-shaped fragment is extracted, an
+ * ordinary lowercase one is not.
+ */
+export function factClaims(text, sourceNormalized = null) {
   const clean = stripMarkup(text);
   const claims = [];
   const patterns = [
@@ -319,7 +407,18 @@ export function factClaims(text) {
     // passed the gate (CodeRabbit review). The connector list is closed and
     // each one must be followed by another Capitalised word, so the capture
     // cannot wander into ordinary prose.
-    ['title', /\b(?:[Ss]erved [Aa]s|[Ww]orked [Aa]s|[Tt]itle\s*:\s*|[Rr]ole\s*:\s*)\s*(?:an?\s+|the\s+)?([A-Z][\w/-]*(?:\s+(?:of|for|and|the)\s+[A-Z][\w/-]*|\s+[A-Z][\w/-]*){0,4})|\b(?:[Ww]orked [Aa]t|[Jj]oined)\s+[A-Z][\w&.'-]*(?:\s+[A-Z][\w&.'-]*){0,4}\s+[Aa]s\s+(?:an?\s+|the\s+)?([A-Z][\w/-]*(?:\s+(?:of|for|and|the)\s+[A-Z][\w/-]*|\s+[A-Z][\w/-]*){0,4})/g],
+    //
+    // #3907 — the first captured token used `[A-Z][\w/-]*`, whose `*` allows
+    // a bare single capital letter to satisfy it. Ordinary prose like "...to
+    // this role: I do not have..." then read the pronoun "I" as a one-letter
+    // job title. The fix requires at least one more character after the
+    // leading capital (`+` instead of `*`), which a real title always has —
+    // even a 2-letter acronym like "VP" or "PM" still matches — while a bare
+    // "I" or "A" no longer can. Only the FIRST token of each alternative is
+    // tightened; the subsequent tokens in the `{0,4}` repetition keep `*`
+    // because a later short word in a real multi-word title (e.g. the "AI"
+    // in "Head of AI") must still be allowed.
+    ['title', /\b(?:[Ss]erved [Aa]s|[Ww]orked [Aa]s|[Tt]itle\s*:\s*|[Rr]ole\s*:\s*)\s*(?:an?\s+|the\s+)?([A-Z][\w/-]+(?:\s+(?:of|for|and|the)\s+[A-Z][\w/-]*|\s+[A-Z][\w/-]*){0,4})|\b(?:[Ww]orked [Aa]t|[Jj]oined)\s+[A-Z][\w&.'-]*(?:\s+[A-Z][\w&.'-]*){0,4}\s+[Aa]s\s+(?:an?\s+|the\s+)?([A-Z][\w/-]+(?:\s+(?:of|for|and|the)\s+[A-Z][\w/-]*|\s+[A-Z][\w/-]*){0,4})/g],
     ['tool', /\b(?:using|built with|worked with|technologies?\s*:\s*|tech stack\s*:\s*)([^.;\n]+?)(?=\s+\bfor\b|[.;\n]|$)/gi],
   ];
   for (const [kind, pattern] of patterns) {
@@ -330,7 +429,7 @@ export function factClaims(text) {
         : [match[1] || match[2]];
       for (const raw of rawValues) {
         const value = normalizeFact(raw);
-        if (value && (kind !== 'tool' || isLikelyTool(raw))) claims.push({ kind, value });
+        if (value && (kind !== 'tool' || isLikelyTool(raw, sourceNormalized))) claims.push({ kind, value });
       }
     }
   }
@@ -679,15 +778,32 @@ export function auditClaims(targetText, sourceText, config = {}) {
   return { invented, forbidden };
 }
 
-/** Load and validate the optional fact-gate configuration file. */
-function loadConfig(path) {
-  if (!existsSync(path)) return { allow_metrics: [], allow_facts: [], forbidden_phrases: [], warn_phrases: [] };
+/**
+ * Load and validate the optional fact-gate configuration file.
+ *
+ * The empty config is a fine default and a terrible silent one: forbidden_phrases
+ * and warn_phrases are the only phrase-level guard this module has, so with no
+ * file loaded the phrase check cannot fail — and a gate that is DISABLED then
+ * reads exactly like a gate that RAN AND FOUND NOTHING. `missing` is the one bit
+ * that tells them apart; callers surface it (#3894).
+ *
+ * Nothing here turns a missing config into an error. A user who has never
+ * written a cv-facts.json is in a normal state; they just should not be left
+ * believing a gate is protecting them when none is loaded.
+ *
+ * @param {string} path absolute path to the configuration file
+ * @returns {{missing: boolean, config: {allow_metrics: string[], allow_facts: string[], forbidden_phrases: string[], warn_phrases: string[]}}}
+ * @throws when the file exists but is unparseable or has a non-array key
+ */
+export function loadFactConfig(path) {
+  const keys = ['allow_metrics', 'allow_facts', 'forbidden_phrases', 'warn_phrases'];
+  if (!existsSync(path)) return { missing: true, config: Object.fromEntries(keys.map(key => [key, []])) };
   const config = JSON.parse(readFileSync(path, 'utf-8'));
-  for (const key of ['allow_metrics', 'allow_facts', 'forbidden_phrases', 'warn_phrases']) {
+  for (const key of keys) {
     if (config[key] == null) config[key] = [];
     else if (!Array.isArray(config[key])) throw new Error(`${key} must be an array in ${path}`);
   }
-  return config;
+  return { missing: false, config };
 }
 
 /** Resolve a CLI or configuration path relative to the selected working directory. */
@@ -715,13 +831,13 @@ export function verifyFacts(targetText, {
   cwd = process.cwd(),
 } = {}) {
   const sourceText = sourcePaths.map(path => readIfExists(resolveInputPath(path, cwd))).join('\n');
-  const config = loadConfig(resolveInputPath(configPath, cwd));
+  const { missing: configMissing, config } = loadFactConfig(resolveInputPath(configPath, cwd));
   const allowed = allowedMetricSet(sourceText, config.allow_metrics);
   const targetClaims = metricClaims(targetText);
   const invented = [...targetClaims].filter(claim => !allowed.has(claim));
   const sourceNormalized = normalizeFact(stripMarkup(sourceText));
   const allowedFacts = new Set(config.allow_facts.map(normalizeFact));
-  const unsupportedFacts = [...factClaims(targetText), ...delegatedAuthorshipClaims(targetText, sourceText)]
+  const unsupportedFacts = [...factClaims(targetText, sourceNormalized), ...delegatedAuthorshipClaims(targetText, sourceText)]
     .filter(({ value }) => !sourceContainsFact(sourceNormalized, value) && !allowedFacts.has(value))
     .filter((claim, index, claims) => claims.findIndex(other => other.kind === claim.kind && other.value === claim.value) === index);
   const forbidden = config.forbidden_phrases
@@ -742,6 +858,10 @@ export function verifyFacts(targetText, {
     forbidden,
     warnings,
     coverage,
+    // Deliberately outside the verdict: no config is a normal state, not a
+    // finding. It rides along so a caller can say the phrase lists were never
+    // loaded instead of printing a clean result the reader takes for "checked".
+    configMissing,
   };
 }
 
@@ -1149,6 +1269,12 @@ export function runCli(args = process.argv.slice(2)) {
       sourcePaths: parsed.sourcePaths.length ? parsed.sourcePaths : DEFAULT_SOURCES,
       configPath: parsed.configPath,
     });
+    // On stderr, before any verdict line and regardless of it: with no config
+    // the phrase lists are empty, so "passed" below means the phrase check never
+    // ran. stdout stays clean so --json remains parseable.
+    if (result.configMissing) {
+      console.error(`⚠️  fact-gate config not found: ${parsed.configPath} — forbidden/advisory phrase checks did not run.`);
+    }
     if (parsed.json) {
       console.log(JSON.stringify(result));
       return result.verdict === 'block' ? 1 : 0;
