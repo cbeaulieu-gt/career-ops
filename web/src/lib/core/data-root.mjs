@@ -60,3 +60,33 @@ export function resolveDataRoot(coreRoot, readMarker, env, resolve, join) {
 
   return coreRoot;
 }
+
+/**
+ * Resolve the active tracker with the same precedence and canonicalization as
+ * core/path-resolver.mjs. Kept in this plain module because server-side web
+ * reads are synchronous, while the core checkout is selected at runtime and
+ * cannot be bundled as a static Next dependency. The parity test in
+ * tests/lib/data-root.test.mjs pins this mirror to the core implementation.
+ *
+ * @param {string} rootDir Resolved career-ops data root.
+ * @param {NodeJS.ProcessEnv} env
+ * @param {(p: string) => boolean} exists `fs.existsSync`
+ * @param {(p: string) => string} resolve `path.resolve`
+ * @param {(...parts: string[]) => string} join `path.join`
+ * @param {(p: string) => string} realpath `fs.realpathSync`
+ * @returns {string} Canonical absolute tracker path.
+ */
+export function resolveTrackerPath(rootDir, env, exists, resolve, join, realpath) {
+  const override = env.CAREER_OPS_TRACKER?.trim();
+  const raw = override
+    ? override
+    : exists(join(rootDir, "data/applications.md"))
+      ? join(rootDir, "data/applications.md")
+      : join(rootDir, "applications.md");
+  const absolute = resolve(raw);
+  try {
+    return realpath(absolute);
+  } catch {
+    return absolute;
+  }
+}

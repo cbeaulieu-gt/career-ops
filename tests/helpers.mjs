@@ -200,6 +200,10 @@ export function run(cmd, args = [], opts = {}) {
   lastFailure = null;
   const exe = resolveAllowedExecutable(cmd);
   try {
+    // Test-only wrapper: the executable is mapped to the literal allowlist
+    // above, and arguments stay an argv vector with no shell interpretation.
+    // codeql[js/command-line-injection]
+    // codeql[js/shell-command-injection-from-environment]
     return execFileSync(exe, args, { cwd: ROOT, encoding: 'utf-8', timeout: 30000, ...opts }).trim();
   } catch (e) {
     // execFileSync attaches the child's streams and exit status to the error.

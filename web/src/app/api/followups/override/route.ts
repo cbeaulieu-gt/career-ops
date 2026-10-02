@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { atomicWrite } from "@/lib/core/safe-write";
 import { isRealISODate, localISODate } from "@/lib/followups";
+import { isFollowupPinForApp, parseFollowupId } from "@/lib/followup-id.mjs";
 import { followupsLogPath, withFollowupsWrite, followupsWriteError } from "@/lib/followups-server";
 
 export const runtime = "nodejs";
@@ -14,8 +15,6 @@ export const dynamic = "force-dynamic";
 // wins over the computed schedule (it even revives a cold application) until a
 // follow-up is logged on/after the set-date, which resumes the normal cadence.
 
-const pinRe = (appNum: number) => new RegExp(`^-\\s+next\\s+#${appNum}\\s`, "i");
-
 export async function POST(req: Request) {
   let body: { appNum?: string | number; date?: string };
   try {
@@ -23,8 +22,8 @@ export async function POST(req: Request) {
   } catch {
     return Response.json({ error: "bad json" }, { status: 400 });
   }
-  const appNum = Number.parseInt(String(body.appNum ?? ""), 10);
-  if (!Number.isInteger(appNum) || appNum < 0) {
+  const appNum = parseFollowupId(body.appNum);
+  if (appNum === null) {
     return Response.json({ error: "appNum (application #) required" }, { status: 400 });
   }
   const date = (body.date ?? "").trim();
@@ -39,7 +38,7 @@ export async function POST(req: Request) {
       let existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "# Follow-ups\n\n";
       // Supersede: drop any previous pin lines for this application (the parser
       // takes the last one anyway; pruning keeps the file tidy).
-      const kept = existing.split("\n").filter((line) => !pinRe(appNum).test(line));
+      const kept = existing.split("\n").filter((line) => !isFollowupPinForApp(line, appNum));
       existing = kept.join("\n");
       if (!existing.endsWith("\n")) existing += "\n";
       existing += `- next #${appNum} ${date} (set ${localISODate()})\n`;
@@ -59,8 +58,8 @@ export async function DELETE(req: Request) {
   } catch {
     return Response.json({ error: "bad json" }, { status: 400 });
   }
-  const appNum = Number.parseInt(String(body.appNum ?? ""), 10);
-  if (!Number.isInteger(appNum) || appNum < 0) {
+  const appNum = parseFollowupId(body.appNum);
+  if (appNum === null) {
     return Response.json({ error: "appNum (application #) required" }, { status: 400 });
   }
 
@@ -69,7 +68,7 @@ export async function DELETE(req: Request) {
   try {
     return await withFollowupsWrite(() => {
       const lines = fs.readFileSync(file, "utf8").split("\n");
-      const kept = lines.filter((line) => !pinRe(appNum).test(line));
+      const kept = lines.filter((line) => !isFollowupPinForApp(line, appNum));
       if (kept.length === lines.length) {
         return Response.json({ error: `no pinned next-date for application #${appNum}` }, { status: 404 });
       }

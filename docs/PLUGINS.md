@@ -46,7 +46,11 @@ imported), an `index.mjs` (default-exports your hooks), and optionally a
 — there is no auto-submit hook. Producers **return** `Job[]`; the engine writes
 them. Reach the network **only** through `ctx.fetch` (your manifest
 `allowedHosts` is enforced, with SSRF protection). Keys arrive via `ctx.env`,
-non-secret settings via `ctx.settings`.
+non-secret settings via `ctx.settings`. To deduplicate the postings you return —
+or to compare a posting against one you have already seen — use
+`ctx.normalizePostingUrl(url)`, which is the same key the tracker and scanner
+build. It returns `''` when there is nothing to key on, and `''` means *no key*:
+never match one `''` against another.
 
 See `plugins/README.md` for the full contract + the honest trust model (plain
 ESM has no hard sandbox — bundled plugins are code-reviewed; your own are your
@@ -82,7 +86,7 @@ This fork keeps its authenticated Adzuna and JSearch providers outside the
 system layer as standalone plugins:
 
 - [career-ops-plugin-adzuna](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5)
-- [career-ops-plugin-jsearch](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/d3d2cbcfa98e3b1f7d62c9cef3b154394c966926)
+- [career-ops-plugin-jsearch v1.1.0](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/184650318dfe73ade3ccb3bf23c00c9581527e55)
 
 They are not bundled and are not listed in the career-ops registry. Installers
 must therefore name the repository and an exact 40-character commit, review the
@@ -92,11 +96,11 @@ capability card, and opt in explicitly:
 node plugins.mjs add cbeaulieu-gt/career-ops-plugin-adzuna --sha 9bf2b2def66091e5d655a838ba68df53ca36f1f5
 node plugins.mjs enable adzuna --confirm
 
-node plugins.mjs add cbeaulieu-gt/career-ops-plugin-jsearch --sha d3d2cbcfa98e3b1f7d62c9cef3b154394c966926
+node plugins.mjs add cbeaulieu-gt/career-ops-plugin-jsearch --sha 184650318dfe73ade3ccb3bf23c00c9581527e55
 node plugins.mjs enable jsearch --confirm
 ```
 
-These commits are the v1.0.0 releases. Direct installation records the repo,
+These pins are Adzuna v1.0.0 and JSearch v1.1.0. Direct installation records the repo,
 commit, file hashes, and accepted capability surface in the user's ignored
 `plugins.lock`; the installed code lives in ignored `plugins.local/`.
 

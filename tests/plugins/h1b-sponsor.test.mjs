@@ -1289,6 +1289,8 @@ if (!existsSync(API_PATH)) {
     await mkdir(tmpDir, { recursive: true });
     await writeFile(wrapperFile, [
       "import { writeFileSync } from 'node:fs';",
+      // Test-only generated module; JSON.stringify safely encodes the path as a string literal.
+      // codeql[js/bad-code-sanitization]
       `globalThis.fetch = async (...args) => { writeFileSync(${JSON.stringify(marker)}, String(args[0]), 'utf8'); throw new Error('EGRESS'); };`,
       `process.argv = [process.argv[0], ${JSON.stringify(CHECK_PATH)}, 'Acme Corp', '--json', '--cache-dir', ${JSON.stringify(join(tmpDir, 'cache'))}];`,
       `await import(${JSON.stringify(pathToFileURL(CHECK_PATH).href)});`,
