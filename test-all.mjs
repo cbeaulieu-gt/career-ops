@@ -216,7 +216,15 @@ async function runDiscovered(filter = null) {
     // counters. Importing them is what loses the result, so this cannot be
     // fixed in finish(); it has to happen where the suite is invoked.
     if (/from ['"]node:test['"]/.test(src)) {
-      const out = run(NODE, ['--test', f]);
+      // This shell-heavy suite starts many Git Bash processes and takes about
+      // 27s on an otherwise-idle Windows host. The shared 30s ceiling becomes
+      // nondeterministic under aggregate-suite load, so give this known
+      // outlier explicit headroom while every other node:test suite retains
+      // the default budget.
+      const timeout = basename(f) === 'batch-runner-backoff.test.mjs'
+        ? 60_000
+        : DEFAULT_SCRIPT_TIMEOUT_MS;
+      const out = run(NODE, ['--test', f], { timeout });
       if (out === null) {
         const detail = lastRunFailure();
         fail(`${rel} — node:test suite failed (exit ${detail?.status ?? '?'})`);

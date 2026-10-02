@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import * as yaml from 'js-yaml';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -73,16 +73,19 @@ test('preview does not create a profile, and validation rejects missing evidence
   });
 });
 
-test('source paths outside the data root retain their complete absolute path', () => {
+test('import rejects absolute and traversal paths outside the data root', () => {
   withProfileRoot((root) => {
     const sibling = `${root}-archive`;
     mkdirSync(sibling, { recursive: true });
     const sourcePath = join(sibling, 'cv.md');
     writeFileSync(sourcePath, CV);
     try {
-      const result = runCli(root, ['import', sourcePath]);
-      assert.equal(result.status, 0, result.stderr);
-      assert.ok(result.stdout.includes(sourcePath), result.stdout);
+      for (const sourceArg of [sourcePath, relative(root, sourcePath)]) {
+        const result = runCli(root, ['import', sourceArg]);
+        assert.equal(result.status, 1, result.stderr);
+        assert.match(result.stderr, /outside the career-ops data root/i);
+        assert.doesNotMatch(result.stdout, /review candidates/);
+      }
     } finally {
       rmSync(sibling, { recursive: true, force: true });
     }

@@ -6,7 +6,7 @@
  */
 
 import { createHash } from 'crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'path';
 import { createInterface } from 'readline';
 import * as yaml from 'js-yaml';
@@ -216,9 +216,10 @@ async function doImport(args) {
   const sourceArg = args.find((arg) => !arg.startsWith('--')) || 'cv.md';
   const sourcePath = resolve(root, sourceArg);
   if (!existsSync(sourcePath)) throw new Error(`CV file not found: ${sourcePath}`);
-  const relativeSource = relative(root, sourcePath);
+  const relativeSource = relative(realpathSync(root), realpathSync(sourcePath));
   const outsideRoot = relativeSource === '..' || relativeSource.startsWith(`..${sep}`) || isAbsolute(relativeSource);
-  const source = outsideRoot ? sourcePath : relativeSource.split(sep).join('/');
+  if (outsideRoot) throw new Error(`CV source is outside the career-ops data root: ${sourcePath}`);
+  const source = relativeSource.split(sep).join('/');
   const extracted = parseCv(readFileSync(sourcePath, 'utf8'), source);
   const candidates = [];
   for (const key of ['summary', 'experiences', 'projects', 'education', 'certifications', 'skills']) {

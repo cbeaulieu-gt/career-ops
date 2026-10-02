@@ -34,11 +34,14 @@ function fixture(run) {
 test('adaptive delays grow, saturate, honor small caps and remain within jitter bounds', () => fixture(({ invoke }) => {
   const output = invoke(`${functions}
     : > worker.log
-    for RATE_LIMIT_SLEEP in 1 8 30 31 300 2147483647; do
-      for retry in 0 1 2 3 4 1000000; do
-        for sample in 1 2; do
-          printf '%s %s %s\n' "$RATE_LIMIT_SLEEP" "$retry" "$(rate_limit_delay worker.log "$retry")"
-        done
+    # Cover small, non-power-of-two, ordinary and maximum-safe caps. Retry 0/1
+    # proves growth, 4 proves saturation, and the huge value proves overflow
+    # safety. One randomized sample per pair is sufficient for the range
+    # invariant and keeps this subprocess-heavy suite below the runner's 30s
+    # ceiling under Windows load.
+    for RATE_LIMIT_SLEEP in 1 31 300 2147483647; do
+      for retry in 0 1 4 1000000; do
+        printf '%s %s %s\n' "$RATE_LIMIT_SLEEP" "$retry" "$(rate_limit_delay worker.log "$retry")"
       done
     done`);
   for (const line of output.split('\n')) {
