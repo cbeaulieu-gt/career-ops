@@ -15,6 +15,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(HERE, "..", "..", "src", "lib", "inbox-skip.mjs");
+const ROUTE = path.join(HERE, "..", "..", "src", "app", "api", "inbox", "skip", "route.ts");
 const CORE = process.env.CAREER_OPS_ROOT || path.join(HERE, "..", "..", "..");
 const LOCK = path.join(CORE, "pipeline-lock.mjs");
 const HAS_LOCK = fs.existsSync(LOCK);
@@ -195,4 +196,10 @@ test("setInboxSkip refuses an unmatched URL and leaves the file untouched", asyn
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("the route resolves pipeline-lock from the code root, not the data root", () => {
+  const source = fs.readFileSync(ROUTE, "utf8");
+  assert.match(source, /rootScript\(["']pipeline-lock["']\)/);
+  assert.doesNotMatch(source, /path\.join\(root,\s*["']pipeline-lock\.mjs["']\)/);
 });

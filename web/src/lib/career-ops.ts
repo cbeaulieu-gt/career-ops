@@ -157,7 +157,11 @@ export function readApplications(): Application[] {
   // never a hand-written return-shape list that the two could drift from. The
   // third argument is the running system checkout, so a data-only root (no
   // tracker-aliases.json of its own) still resolves headers correctly.
-  return parseApplications(md, careerOpsRoot(), path.resolve(process.cwd(), "..")) as Application[];
+  return parseApplications(
+    md,
+    careerOpsRoot(),
+    resolveCodeRoot(process.cwd(), process.env),
+  ) as Application[];
 }
 
 export type StatusLogRow = {

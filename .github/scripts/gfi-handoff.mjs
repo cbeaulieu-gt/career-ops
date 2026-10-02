@@ -68,15 +68,19 @@ export function eligible(issue, { comments, timeline, now = new Date() }) {
 async function handoff(issue, why) {
   const n = issue.number;
   if (DRY) { log(`DRY-RUN #${n}: quitar good first issue, poner agent-candidate, asignar ${COPILOT} : ${why}`); return; }
+  // Assignment is the only step that needs the separate user-to-server token
+  // and is the likeliest to fail independently. Complete it before removing
+  // the human-facing label or promising that an agent will draft the fix; a
+  // failed assignment then leaves the issue eligible for the next run.
+  await rest('POST', `repos/${REPO}/issues/${n}/assignees`, {
+    assignees: [COPILOT],
+    agent_assignment: { target_repo: REPO, base_branch: 'main', custom_instructions: 'Follow .github/copilot-instructions.md. Run `node test-all.mjs --quick` before opening the pull request. Label the pull request agent-generated.', custom_agent: '', model: '' },
+  }, ASSIGN_TOKEN);
   await rest('DELETE', `repos/${REPO}/issues/${n}/labels/${encodeURIComponent('good first issue')}`);
   await rest('POST', `repos/${REPO}/issues/${n}/labels`, { labels: ['agent-candidate'] });
   await rest('POST', `repos/${REPO}/issues/${n}/comments`, { body:
     `Nobody claimed this one in the newcomer window, so it moves to the agent queue: a coding agent will draft a fix and a maintainer will review it by hand. ` +
     `If you were about to take it, say so here and a maintainer hands it back to you: people always come first.\n\n<!-- co:gfi-handoff:${n} -->` });
-  await rest('POST', `repos/${REPO}/issues/${n}/assignees`, {
-    assignees: [COPILOT],
-    agent_assignment: { target_repo: REPO, base_branch: 'main', custom_instructions: 'Follow .github/copilot-instructions.md. Run `node test-all.mjs --quick` before opening the pull request. Label the pull request agent-generated.', custom_agent: '', model: '' },
-  }, ASSIGN_TOKEN);
   log(`hecho #${n}: agent-candidate + ${COPILOT} : ${why}`);
 }
 

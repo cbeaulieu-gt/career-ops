@@ -52,7 +52,7 @@ test("blank CAREER_OPS_CODE_ROOT falls back like an unset var", () => {
 // here as a route runs it: real process.cwd() and process.env. It lives in
 // career-ops.ts, reached through the shared @/ alias hook.
 const skipTs = !process.features?.typescript && "this Node cannot import career-ops.ts (no type stripping)";
-const { rootScript } = skipTs ? {} : await import("@/lib/career-ops");
+const { rootScript, readApplications } = skipTs ? {} : await import("@/lib/career-ops");
 
 function tmpdir(prefix) {
   // realpath: macOS symlinks /var → /private/var, and process.cwd() reports the
@@ -105,4 +105,40 @@ test("rootScript: CAREER_OPS_CODE_ROOT overrides the checkout", { skip: skipTs }
   const checkout = fakeCheckout();
   const engine = fakeCheckout();
   assert.equal(rootScriptFrom(path.join(checkout, "web"), { CAREER_OPS_CODE_ROOT: engine }), path.join(engine, "doctor.mjs"));
+});
+
+test("readApplications: CAREER_OPS_CODE_ROOT supplies aliases for a data-only root", { skip: skipTs }, () => {
+  const checkout = fakeCheckout();
+  const engine = tmpdir("code-root-engine-");
+  const dataOnly = tmpdir("code-root-data-");
+  fs.mkdirSync(path.join(dataOnly, "data"));
+  fs.writeFileSync(path.join(engine, "tracker-aliases.json"), JSON.stringify({
+    "#": "num", date: "date", company: "company", via: "via", role: "role",
+    score: "score", status: "status", pdf: "pdf", report: "report", notes: "notes",
+  }));
+  fs.writeFileSync(path.join(dataOnly, "data", "applications.md"), [
+    "| # | Date | Company | Via | Role | Score | Status | PDF | Report | Notes |",
+    "|---|---|---|---|---|---|---|---|---|---|",
+    "| 1 | 2026-10-02 | Acme | Agency | Engineer | 4.0/5 | Applied | - | - | note |",
+  ].join("\n"));
+
+  const keys = ["CAREER_OPS_CODE_ROOT", "CAREER_OPS_ROOT", "CAREER_OPS_DATA_DIR"];
+  const saved = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
+  const priorCwd = process.cwd();
+  process.chdir(path.join(checkout, "web"));
+  process.env.CAREER_OPS_ROOT = dataOnly;
+  process.env.CAREER_OPS_CODE_ROOT = engine;
+  delete process.env.CAREER_OPS_DATA_DIR;
+  try {
+    const [application] = readApplications();
+    assert.equal(application.via, "Agency");
+    assert.equal(application.role, "Engineer");
+    assert.equal(application.score, "4.0/5");
+  } finally {
+    process.chdir(priorCwd);
+    for (const k of keys) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+  }
 });
