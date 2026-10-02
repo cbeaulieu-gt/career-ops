@@ -44,6 +44,18 @@ jobs:
           ref: main
           persist-credentials: false
           sparse-checkout: .github/scripts
+      # A fork can receive this workflow and its script in the same release-sync
+      # PR. Until that PR lands, main has no script to execute. Bootstrap only
+      # from the exact reviewed upstream release; never execute code from the PR.
+      - name: Bootstrap direction gate for first sync
+        if: ${{ hashFiles('.github/scripts/direction-gate.mjs') == '' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: santifer/career-ops
+          ref: e8332a8ba88c8da1e21eeeeec90bac517807b475 # career-ops-v1.35.0
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+          path: .direction-gate-bootstrap
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
@@ -51,4 +63,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.inputs.pr }}
-        run: node .github/scripts/direction-gate.mjs
+        run: |
+          script=.github/scripts/direction-gate.mjs
+          if [[ ! -f "$script" ]]; then script=.direction-gate-bootstrap/.github/scripts/direction-gate.mjs; fi
+          node "$script"
