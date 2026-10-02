@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { resolveDataRoot } from "../../src/lib/core/data-root.mjs";
+import { resolveDataRoot, resolveTrackerPath } from "../../src/lib/core/data-root.mjs";
 
 const CORE = path.resolve(import.meta.dirname, "../../..");
 
@@ -146,5 +146,48 @@ test("AGREES with the core's path-resolver.mjs on every branch", async (t) => {
 
     const web_answer = resolve(core, env);
     assert.equal(web_answer, core_answer, `disagreement on: ${c.name}`);
+  }
+});
+
+test("tracker resolution AGREES with the core for defaults and overrides", async (t) => {
+  const src = path.join(CORE, "path-resolver.mjs");
+  if (!fs.existsSync(src)) return t.skip("core path-resolver.mjs not present");
+
+  for (const c of [
+    { name: "data tracker exists", dataTracker: true, override: null },
+    { name: "root fallback", dataTracker: false, override: null },
+    { name: "absolute override", dataTracker: true, override: "absolute" },
+    { name: "relative override", dataTracker: true, override: "relative-applications.md" },
+  ]) {
+    const root = tmpdir();
+    fs.copyFileSync(src, path.join(root, "path-resolver.mjs"));
+    fs.mkdirSync(path.join(root, "data"), { recursive: true });
+    if (c.dataTracker) fs.writeFileSync(path.join(root, "data", "applications.md"), "");
+    const overridePath = c.override === "absolute"
+      ? path.join(root, "elsewhere", "applications.md")
+      : c.override;
+    const env = overridePath ? { CAREER_OPS_TRACKER: overridePath } : {};
+
+    const saved = process.env.CAREER_OPS_TRACKER;
+    if (overridePath) process.env.CAREER_OPS_TRACKER = overridePath;
+    else delete process.env.CAREER_OPS_TRACKER;
+    let coreAnswer;
+    try {
+      const mod = await import(`${pathToFileURL(path.join(root, "path-resolver.mjs")).href}?tracker=${encodeURIComponent(c.name)}`);
+      coreAnswer = mod.resolveTrackerPath(root);
+    } finally {
+      if (saved === undefined) delete process.env.CAREER_OPS_TRACKER;
+      else process.env.CAREER_OPS_TRACKER = saved;
+    }
+
+    const webAnswer = resolveTrackerPath(
+      root,
+      env,
+      fs.existsSync,
+      path.resolve,
+      path.join,
+      fs.realpathSync,
+    );
+    assert.equal(webAnswer, coreAnswer, `disagreement on: ${c.name}`);
   }
 });

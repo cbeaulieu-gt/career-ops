@@ -62,14 +62,22 @@ export const DEFAULT_PROFILE_PATH = process.env.CAREER_OPS_PROFILE
 export const UNDOCUMENTED_KEYS = {
   rejection_latency: 'rejection-latency.mjs (courtesy_days)',
   table_freshness: 'check-table-freshness.mjs (max_age_months)',
-  scan: 'browser-extract.mjs / doctor.mjs (extractor)',
 };
 
-/** Top-level keys from the shipped example — the documented schema. */
+/**
+ * Top-level keys from the shipped example — both enabled defaults and optional
+ * blocks documented as comments. YAML parsers discard the latter, so collect
+ * top-level `# key:` lines explicitly without admitting indented child keys.
+ */
 export function knownKeysFromExample(exampleText) {
-  const doc = yaml.load(String(exampleText ?? '')) || {};
+  const text = String(exampleText ?? '');
+  const doc = yaml.load(text) || {};
   if (typeof doc !== 'object' || Array.isArray(doc)) return [];
-  return Object.keys(doc);
+  const commented = text
+    .split(/\r?\n/)
+    .map((line) => line.match(/^# ?([A-Za-z_][A-Za-z0-9_-]*)\s*:(?:\s|$)/)?.[1])
+    .filter(Boolean);
+  return [...new Set([...Object.keys(doc), ...commented])];
 }
 
 /**

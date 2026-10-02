@@ -162,6 +162,9 @@ const { readStatusLog } = skipTs ? {} : await import("@/lib/career-ops");
 function withDataRoot(setup, fn) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "sankey-status-log-"));
   fs.mkdirSync(path.join(root, "data"));
+  // Pin the canonical data/applications.md layout so the sibling ledger is
+  // data/status-log.tsv, matching the production tracker resolver.
+  fs.writeFileSync(path.join(root, "data", "applications.md"), "");
   setup(path.join(root, "data"));
   const prev = process.env.CAREER_OPS_ROOT;
   process.env.CAREER_OPS_ROOT = root;
@@ -179,6 +182,32 @@ test("readStatusLog: a present log is parsed from the data root", { skip: skipTs
   const rows = withDataRoot((data) => fs.writeFileSync(path.join(data, "status-log.tsv"), tsv), () => readStatusLog());
   assert.equal(rows.length, 1);
   assert.equal(rows[0].num, 13);
+});
+
+test("readStatusLog: CAREER_OPS_TRACKER moves the sibling ledger", { skip: skipTs }, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "sankey-tracker-override-"));
+  const dataRoot = path.join(root, "default-root");
+  const trackerDir = path.join(root, "redirected");
+  fs.mkdirSync(path.join(dataRoot, "data"), { recursive: true });
+  fs.mkdirSync(trackerDir, { recursive: true });
+  fs.writeFileSync(path.join(dataRoot, "data", "status-log.tsv"), "1\t2026-08-26\tApplied\tRejected\tset-status\twrong\n");
+  fs.writeFileSync(path.join(trackerDir, "status-log.tsv"), "42\t2026-08-27\tInterview\tRejected\tset-status\tright\n");
+
+  const previousRoot = process.env.CAREER_OPS_ROOT;
+  const previousTracker = process.env.CAREER_OPS_TRACKER;
+  process.env.CAREER_OPS_ROOT = dataRoot;
+  process.env.CAREER_OPS_TRACKER = path.join(trackerDir, "applications.md");
+  try {
+    const rows = readStatusLog();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].num, 42);
+  } finally {
+    if (previousRoot === undefined) delete process.env.CAREER_OPS_ROOT;
+    else process.env.CAREER_OPS_ROOT = previousRoot;
+    if (previousTracker === undefined) delete process.env.CAREER_OPS_TRACKER;
+    else process.env.CAREER_OPS_TRACKER = previousTracker;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("readStatusLog: a missing log is an empty log", { skip: skipTs }, () => {

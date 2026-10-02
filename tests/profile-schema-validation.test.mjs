@@ -49,9 +49,10 @@ test('the real shipped example validates clean against itself', () => {
 });
 
 test('keys the code reads but the example omits are not called unknown', () => {
-  // rejection_latency, table_freshness and scan have real readers. Warning on
-  // them would flag a correct profile — the failure mode that makes a validator
-  // something users learn to ignore.
+  // rejection_latency and table_freshness have real readers. Warning on them
+  // would flag a correct profile — the failure mode that makes a validator
+  // something users learn to ignore. `scan` is documented as a commented
+  // option in the example and is covered by the documented-key test below.
   for (const key of Object.keys(UNDOCUMENTED_KEYS)) {
     const { findings } = validateProfile(`${key}:\n  x: 1\n`, EXAMPLE);
     assert.ok(
@@ -74,6 +75,24 @@ test('the known-key set is derived from the example, not hardcoded here', () => 
   const widened = `${EXAMPLE}\nbrand_new_section:\n  x: 0\n`;
   assert.deepEqual(validateProfile('brand_new_section:\n  x: 1\n', widened).findings, []);
   assert.ok(knownKeysFromExample(widened).includes('brand_new_section'));
+});
+
+test('commented top-level options in the shipped example are documented keys', () => {
+  const commentedOptions = [
+    'followup_cadence',
+    'page_format',
+    'style',
+    'auto_pdf_score_threshold',
+    'pipeline',
+  ];
+  const known = knownKeysFromExample(EXAMPLE);
+  for (const key of commentedOptions) {
+    assert.ok(known.includes(key), `${key} was omitted from the documented schema`);
+    assert.ok(
+      !validateProfile(`${key}:\n  enabled: true\n`, EXAMPLE).findings.some((f) => f.code === 'unknown-key'),
+      `${key} was reported as unknown when enabled`,
+    );
+  }
 });
 
 test('empty, comment-only and absent profiles are not errors', () => {
