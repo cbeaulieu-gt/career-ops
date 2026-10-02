@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { parseFollowupId } from "../../src/lib/followup-id.mjs";
+import { isFollowupPinForApp, parseFollowupId } from "../../src/lib/followup-id.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(here, "../..");
@@ -42,6 +42,13 @@ test("parseFollowupId rejects coercible prefixes and non-positive or unsafe valu
   ]) {
     assert.equal(parseFollowupId(input), null, `expected ${JSON.stringify(input)} to be rejected`);
   }
+});
+
+test("isFollowupPinForApp matches only the exact numeric application ID", () => {
+  assert.equal(isFollowupPinForApp("- next #42 2026-10-10 (set 2026-10-02)", 42), true);
+  assert.equal(isFollowupPinForApp("  -   NEXT   #42 2026-10-10", 42), true);
+  assert.equal(isFollowupPinForApp("- next #420 2026-10-10", 42), false);
+  assert.equal(isFollowupPinForApp("note mentioning #42", 42), false);
 });
 
 test("all follow-up mutation routes use strict ID parsing", () => {

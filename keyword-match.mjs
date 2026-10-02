@@ -205,10 +205,10 @@ export function htmlToText(html) {
   return String(html || '')
     // Strip comments first so a comment can't shelter a tag from the strips below.
     .replace(/<!--[\s\S]*?-->/g, ' ')
-    // Match the full opening tag (incl. attributes) before the lazy body, and
-    // tolerate whitespace in the closing tag — a stricter filter CodeQL accepts.
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, ' ')
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, ' ')
+    // Match the full opening and closing tags, including malformed attributes
+    // after the closing name, before removing their contents.
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&lt;/gi, '<')
@@ -282,6 +282,9 @@ function runSelfTest() {
   if (variantForms('aws').includes('aw')) failures.push('variantForms truncated acronym aws->aw');
   if (htmlToText('<style>.x{}</style><p>Python &amp; <b>gRPC</b></p>') !== 'Python & gRPC') {
     failures.push('htmlToText strip/decode');
+  }
+  if (htmlToText('<script>evil()</script\t\n ignored><p>Body</p>') !== 'Body') {
+    failures.push('htmlToText malformed script closer');
   }
 
   if (failures.length) {

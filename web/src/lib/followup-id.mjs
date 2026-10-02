@@ -15,3 +15,16 @@ export function parseFollowupId(value) {
   const parsed = Number(trimmed);
   return Number.isSafeInteger(parsed) ? parsed : null;
 }
+
+const FOLLOWUP_PIN_RE = /^\s*-\s+next\s+#([1-9]\d*)\s/i;
+
+/**
+ * Whether a follow-up log line pins the exact application number.
+ * @param {string} line
+ * @param {number} appNum
+ * @returns {boolean}
+ */
+export function isFollowupPinForApp(line, appNum) {
+  const match = FOLLOWUP_PIN_RE.exec(line);
+  return match !== null && Number(match[1]) === appNum;
+}

@@ -66,6 +66,8 @@ for (const file of localImports) {
 if (process.platform === 'win32') {
   const runs = (label, cmd) => {
     try {
+      // Test-only execution of npmCommand's validated executable and argv.
+      // codeql[js/shell-command-injection-from-environment]
       const out = execFileSync(cmd.file, cmd.args, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000 }).trim();
       if (/^\d+\.\d+\.\d+/.test(out)) pass(`${label}: npm --version → ${out}`);
       else fail(`${label}: unexpected npm --version output ${JSON.stringify(out)}`);

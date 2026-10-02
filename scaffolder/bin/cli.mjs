@@ -120,6 +120,9 @@ async function main() {
   let installed = true;
   try {
     const npm = npmCommand(["install"]);
+    // npmCommand rejects shell metacharacters and returns argv separately; the
+    // environment-derived executable path is intentionally never concatenated.
+    // codeql[js/shell-command-injection-from-environment]
     execFileSync(npm.file, npm.args, { cwd: target, stdio: "inherit" });
   } catch {
     installed = false;
