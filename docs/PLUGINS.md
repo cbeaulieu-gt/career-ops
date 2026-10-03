@@ -87,7 +87,7 @@ system layer as standalone plugins:
 
 - [career-ops-plugin-adzuna](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5)
 - [career-ops-plugin-jsearch v1.1.0](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/184650318dfe73ade3ccb3bf23c00c9581527e55)
-- [career-ops-plugin-jooble v1.0.0](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468)
+- [career-ops-plugin-jooble v1.0.0](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/42c8ff92c5f4ebf922f62d69fac039916bbae24d)
 
 They are not bundled and are not listed in the career-ops registry. Installers
 must therefore name the repository and an exact 40-character commit, review the
@@ -100,7 +100,7 @@ node plugins.mjs enable adzuna --confirm
 node plugins.mjs add cbeaulieu-gt/career-ops-plugin-jsearch --sha 184650318dfe73ade3ccb3bf23c00c9581527e55
 node plugins.mjs enable jsearch --confirm
 
-node plugins.mjs add cbeaulieu-gt/career-ops-plugin-jooble --sha e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468
+node plugins.mjs add cbeaulieu-gt/career-ops-plugin-jooble --sha 42c8ff92c5f4ebf922f62d69fac039916bbae24d
 node plugins.mjs enable jooble --confirm
 ```
 
@@ -109,9 +109,10 @@ commit, file hashes, and accepted capability surface in the user's ignored
 `plugins.lock`; the installed code lives in ignored `plugins.local/`.
 
 Jooble requires Career-Ops 1.35.0+ and a US API key in `JOOBLE_API_KEY`
-in the local `.env`. Add this entry under `tracked_companies` in `portals.yml`:
+in the local `.env`. Add this entry under `job_boards` in `portals.yml`:
 
 ```yaml
+job_boards:
   - name: Jooble - Software Engineer
     provider: jooble
     careers_url: https://jooble.org
@@ -126,7 +127,7 @@ The plugin uses the US endpoint only. Jooble documents 500 free requests over
 the key's lifetime, so start with one page per scan. Results provide snippets
 and posting links; `updatedAt` means last modification, and no original posting
 date is invented. See the [Jooble API documentation](https://help.jooble.org/en/support/solutions/articles/60001448238-rest-api-documentation)
-and the [pinned plugin README](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468#readme) for options and limits.
+and the [pinned plugin README](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/42c8ff92c5f4ebf922f62d69fac039916bbae24d#readme) for options and limits.
 
 ### Improving a bundled plugin → publish a maintained successor
 

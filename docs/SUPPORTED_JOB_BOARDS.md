@@ -30,7 +30,7 @@ The unlisted standalone **Jooble** plugin uses the US Jooble API with a scoped
 `max_pages`, and `max_results` bound the search. It returns snippets and
 last-update timestamps rather than an original posting date. See the
 [pinned direct-install instructions](PLUGINS.md#unlisted-direct-installs-adzuna-jsearch-and-jooble)
-and the [reviewed Jooble v1.0.0 source](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468).
+and the [reviewed Jooble v1.0.0 source](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/42c8ff92c5f4ebf922f62d69fac039916bbae24d).
 
 | Board | Type (API / Atom / RSS / parser) | Notes |
 | --- | --- | --- |

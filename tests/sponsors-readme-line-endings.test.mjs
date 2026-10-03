@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { HEADING_BEFORE, HEADING_AFTER, renderRows, renderSection } from '../.github/scripts/sponsors.mjs';
 
 test('sponsor CLI accepts LF and CRLF READMEs while rejecting actual content drift', () => {
-  const root = mkdtempSync(join(tmpdir(), 'career-ops-sponsor-eol-'));
+  // macOS aliases /var to /private/var; the CLI entry guard compares exact paths.
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'career-ops-sponsor-eol-')));
   const sponsors = [{ id: 'example', name: 'Example', url: 'https://example.com',
     logo: 'docs/sponsors/example.svg', description: 'Synthetic sponsor', order: 1 }];
   try {
@@ -23,6 +24,7 @@ test('sponsor CLI accepts LF and CRLF READMEs while rejecting actual content dri
       writeFileSync(join(root, 'README.fr.md'), translated.replace(/\n/g, eol));
       const result = spawnSync(process.execPath, [join(root, '.github/scripts/sponsors.mjs'), '--check'], { encoding: 'utf8' });
       assert.equal(result.status, 0, result.stderr || result.stdout);
+      assert.match(result.stdout, /match \.github\/sponsors\.json/);
     }
     writeFileSync(join(root, 'README.md'), english.replace('Synthetic sponsor', 'Unapproved copy').replace(/\n/g, '\r\n'));
     const drift = spawnSync(process.execPath, [join(root, '.github/scripts/sponsors.mjs'), '--check'], { encoding: 'utf8' });

@@ -493,7 +493,7 @@ or `provider: jooble` entry to `portals.yml`; see
 [Plugins](docs/PLUGINS.md), the
 [Adzuna plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5),
 [JSearch v1.1.0 plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/184650318dfe73ade3ccb3bf23c00c9581527e55), and
-[Jooble v1.0.0 plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468). Jooble requires search keywords and a
+[Jooble v1.0.0 plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/42c8ff92c5f4ebf922f62d69fac039916bbae24d). Jooble requires search keywords and a
 location; its default one-page search conserves the API request allowance.
 
 By default `node scan.mjs` (a.k.a. `npm run scan`) trusts what each ATS feed returns. Some companies leave stale postings in their public API even after the role is closed, so those expired entries can leak into `pipeline.md`. Pass `--verify` to launch Playwright after the API pass and drop expired postings before they hit the pipeline:
