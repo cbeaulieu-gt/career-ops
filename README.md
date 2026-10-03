@@ -188,7 +188,7 @@ It reformulates your CV; it must never fabricate it. A check in code stops a PDF
 | **Interview Suite**      | Time-blocked prep plans, practice sessions with feedback, post-interview debriefs ([`interview/`](modes/interview/README.md)), and a company red-flag detector ([`interview-redflag`](modes/interview-redflag.md)) |
 | **Offer Stage**          | Contract reading companion -- clause walk plus a lawyer question list ([`offer-prep`](modes/offer-prep.md)) -- and a desired/advertised/actual salary-gap analyzer (`salary-gap.mjs`) |
 | **Follow-ups & Replies** | Follow-up cadence calculator and seeded reminders (`followup-cadence.mjs`, `followup-seed.mjs`); employer reply classification into tracker updates ([`reply-watch`](modes/reply-watch.md)) |
-| **Plugin System**        | Opt-in integrations (bundled Gmail, Notion, Apify, and H-1B sponsor lookup; community and direct-installed plugins including Adzuna and JSearch), disabled by default -- see [docs/PLUGINS.md](docs/PLUGINS.md)        |
+| **Plugin System**        | Opt-in integrations (bundled Gmail, Notion, Apify, and H-1B sponsor lookup; community and direct-installed plugins including Adzuna, JSearch, and Jooble), disabled by default -- see [docs/PLUGINS.md](docs/PLUGINS.md)        |
 
 </details>
 
@@ -484,14 +484,17 @@ The scanner comes with **100+ companies** ready to scan and **35+ search queries
 
 **Job boards searched:** 55+ provider modules cover ATS APIs, board-wide feeds, XML/RSS feeds, markdown feeds, and local parsers. See [Supported job boards](docs/SUPPORTED_JOB_BOARDS.md) for the full table.
 
-Authenticated sources remain opt-in. Adzuna and JSearch are unlisted standalone
+Authenticated sources remain opt-in. Adzuna, JSearch, and Jooble are unlisted standalone
 plugins rather than bundled system files, so install them directly at an exact
 commit before enabling them. Adzuna uses `ADZUNA_APP_ID` and
-`ADZUNA_APP_KEY`; JSearch uses `JSEARCH_RAPIDAPI_KEY`. Add an explicit
-`provider: adzuna` or `provider: jsearch` entry to `portals.yml`; see
+`ADZUNA_APP_KEY`; JSearch uses `JSEARCH_RAPIDAPI_KEY`; Jooble uses
+`JOOBLE_API_KEY`. Add an explicit `provider: adzuna`, `provider: jsearch`,
+or `provider: jooble` entry to `portals.yml`; see
 [Plugins](docs/PLUGINS.md), the
-[Adzuna plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5), and
-[JSearch v1.1.0 plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/184650318dfe73ade3ccb3bf23c00c9581527e55).
+[Adzuna plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5),
+[JSearch v1.1.0 plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/184650318dfe73ade3ccb3bf23c00c9581527e55), and
+[Jooble v1.0.0 plugin](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468). Jooble requires search keywords and a
+location; its default one-page search conserves the API request allowance.
 
 By default `node scan.mjs` (a.k.a. `npm run scan`) trusts what each ATS feed returns. Some companies leave stale postings in their public API even after the role is closed, so those expired entries can leak into `pipeline.md`. Pass `--verify` to launch Playwright after the API pass and drop expired postings before they hit the pipeline:
 

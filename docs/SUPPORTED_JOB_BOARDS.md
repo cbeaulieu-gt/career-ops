@@ -11,7 +11,7 @@ with scoped `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` credentials. Enable the
 `adzuna` plugin, then configure `provider: adzuna` with a required two-letter
 `country`; optional `what`/`query`, `where`/`location`, `results_per_page`,
 `max_pages`, and `max_days_old` fields bound the search. See the
-[pinned direct-install instructions](PLUGINS.md#unlisted-direct-installs-adzuna-and-jsearch)
+[pinned direct-install instructions](PLUGINS.md#unlisted-direct-installs-adzuna-jsearch-and-jooble)
 and the [reviewed Adzuna source](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5).
 
 The unlisted standalone **JSearch** plugin searches the current RapidAPI
@@ -21,8 +21,16 @@ The unlisted standalone **JSearch** plugin searches the current RapidAPI
 posting-age, employment-type, requirements, radius, publisher-exclusion,
 field-projection, geographic/remote-pass, page-budget, and result-budget fields
 bound the search. See the
-[pinned direct-install instructions](PLUGINS.md#unlisted-direct-installs-adzuna-and-jsearch)
+[pinned direct-install instructions](PLUGINS.md#unlisted-direct-installs-adzuna-jsearch-and-jooble)
 and the [reviewed JSearch v1.1.0 source](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/184650318dfe73ade3ccb3bf23c00c9581527e55).
+
+The unlisted standalone **Jooble** plugin uses the US Jooble API with a scoped
+`JOOBLE_API_KEY`. Configure an explicit `provider: jooble` entry with
+`keywords` (or `query`) and `location`. Optional `results_per_page`,
+`max_pages`, and `max_results` bound the search. It returns snippets and
+last-update timestamps rather than an original posting date. See the
+[pinned direct-install instructions](PLUGINS.md#unlisted-direct-installs-adzuna-jsearch-and-jooble)
+and the [reviewed Jooble v1.0.0 source](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468).
 
 | Board | Type (API / Atom / RSS / parser) | Notes |
 | --- | --- | --- |

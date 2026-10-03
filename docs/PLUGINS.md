@@ -80,13 +80,14 @@ Broadly-useful, well-tested plugins may be shipped **bundled** in `plugins/`
 reviewed in-tree, always present, and a working example to copy — kept minimal
 and stable on purpose, **not** a home for ongoing feature work.
 
-### Unlisted direct installs: Adzuna and JSearch
+### Unlisted direct installs: Adzuna, JSearch, and Jooble
 
-This fork keeps its authenticated Adzuna and JSearch providers outside the
+This fork keeps its authenticated Adzuna, JSearch, and Jooble providers outside the
 system layer as standalone plugins:
 
 - [career-ops-plugin-adzuna](https://github.com/cbeaulieu-gt/career-ops-plugin-adzuna/tree/9bf2b2def66091e5d655a838ba68df53ca36f1f5)
 - [career-ops-plugin-jsearch v1.1.0](https://github.com/cbeaulieu-gt/career-ops-plugin-jsearch/tree/184650318dfe73ade3ccb3bf23c00c9581527e55)
+- [career-ops-plugin-jooble v1.0.0](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468)
 
 They are not bundled and are not listed in the career-ops registry. Installers
 must therefore name the repository and an exact 40-character commit, review the
@@ -98,11 +99,34 @@ node plugins.mjs enable adzuna --confirm
 
 node plugins.mjs add cbeaulieu-gt/career-ops-plugin-jsearch --sha 184650318dfe73ade3ccb3bf23c00c9581527e55
 node plugins.mjs enable jsearch --confirm
+
+node plugins.mjs add cbeaulieu-gt/career-ops-plugin-jooble --sha e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468
+node plugins.mjs enable jooble --confirm
 ```
 
-These pins are Adzuna v1.0.0 and JSearch v1.1.0. Direct installation records the repo,
+These pins are Adzuna v1.0.0, JSearch v1.1.0, and Jooble v1.0.0. Direct installation records the repo,
 commit, file hashes, and accepted capability surface in the user's ignored
 `plugins.lock`; the installed code lives in ignored `plugins.local/`.
+
+Jooble requires Career-Ops 1.35.0+ and a US API key in `JOOBLE_API_KEY`
+in the local `.env`. Add this entry under `tracked_companies` in `portals.yml`:
+
+```yaml
+  - name: Jooble - Software Engineer
+    provider: jooble
+    careers_url: https://jooble.org
+    keywords: software engineer
+    location: United States
+    results_per_page: 20
+    max_pages: 1
+    enabled: true
+```
+
+The plugin uses the US endpoint only. Jooble documents 500 free requests over
+the key's lifetime, so start with one page per scan. Results provide snippets
+and posting links; `updatedAt` means last modification, and no original posting
+date is invented. See the [Jooble API documentation](https://help.jooble.org/en/support/solutions/articles/60001448238-rest-api-documentation)
+and the [pinned plugin README](https://github.com/cbeaulieu-gt/career-ops-plugin-jooble/tree/e594e19f330ed1aed0cbb8cb9ac4a6bef9ad4468#readme) for options and limits.
 
 ### Improving a bundled plugin → publish a maintained successor
 
