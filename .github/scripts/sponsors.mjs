@@ -127,7 +127,7 @@ export function localizedReadmes() {
 export function checkAll() {
   const sponsors = loadSponsors();
   const problems = [];
-  const en = readFileSync(README, 'utf8');
+  const en = readFileSync(README, 'utf8').replace(/\r\n/g, '\n');
   const cur = currentSection(en);
   if (cur === null) problems.push(`README.md: no "${HEADING}" section`);
   else if (cur !== renderSection(sponsors)) problems.push('README.md: Sponsors section drifted from .github/sponsors.json');
@@ -138,7 +138,7 @@ export function checkAll() {
   else if (!(iBefore < iHere && iHere < iAfter)) problems.push(`README.md: "${HEADING}" must sit between "${HEADING_BEFORE}" and "${HEADING_AFTER}"`);
   const rows = renderRows(sponsors);
   for (const file of localizedReadmes()) {
-    const got = currentRows(readFileSync(join(ROOT, file), 'utf8'));
+    const got = currentRows(readFileSync(join(ROOT, file), 'utf8').replace(/\r\n/g, '\n'));
     if (got === null) problems.push(`${file}: sponsor rows not found`);
     else if (got !== rows) problems.push(`${file}: sponsor rows drifted from .github/sponsors.json`);
   }

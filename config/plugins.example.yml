@@ -34,6 +34,12 @@ plugins:
   jsearch:
     enabled: false
 
+  # ── jooble (direct-installed provider) ── install the unlisted standalone
+  # plugin first; see docs/PLUGINS.md. Uses the US API with JOOBLE_API_KEY
+  # in .env. A provider: jooble entry needs keywords and location.
+  jooble:
+    enabled: false
+
   # ── notion (export + search) ── mirror your tracker to a Notion DB / read records. (features #667/#668, ported from PR #959)
   # Needs NOTION_ACCESS_TOKEN + NOTION_PARENT_PAGE_ID in .env. Run via `node plugins.mjs run notion export`.
   # The DB is resolved by NAME ("Applications") under your parent page — no id needed here.
