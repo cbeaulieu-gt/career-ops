@@ -774,3 +774,12 @@ export function directoryDenyBinds() {
     }
   }
 }
+
+/** Install a deterministic admission stub for tests isolating full-worker behavior.
+ * Screening decisions are exercised separately by batch-screening.test.mjs.
+ * @param {string} root - Temporary fixture repository root.
+ */
+export function installAdmissionFixture(root) {
+  writeFileSync(join(root, 'screen-job.mjs'),
+    'console.log(JSON.stringify({decision:"shortlist",reason:"Fixture admission passed",phase:process.argv[process.argv.indexOf("--phase")+1]}));\n');
+}

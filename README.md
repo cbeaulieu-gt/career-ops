@@ -519,6 +519,12 @@ There is also an **experimental web UI** (alpha and opt-in: nothing runs unless 
 
 ## Project Structure
 
+Batch processing now requires admission before reserving reports or starting full
+evaluation workers. Standard/premium profiles use a separate economy screening
+model; configure it explicitly for Codex. See [screening configuration and commands](docs/screening.md)
+and [batch usage](batch/README.md). Discovery and imported URLs share the same
+candidate-specific deterministic policy. Apply thresholds stay unchanged.
+
 ```
 career-ops/
 ├── AGENTS.md                    # Canonical agent instructions (all CLIs)

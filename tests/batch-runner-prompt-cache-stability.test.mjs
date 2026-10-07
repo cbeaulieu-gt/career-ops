@@ -26,7 +26,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, chmodSync } from 'node:fs';
 import { join, delimiter } from 'node:path';
 import { tmpdir } from 'node:os';
-import { getBash, rmSync } from './helpers.mjs';
+import { getBash, rmSync, installAdmissionFixture } from './helpers.mjs';
 
 const SRC = readFileSync(new URL('../batch/batch-runner.sh', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 
@@ -42,6 +42,7 @@ test('two offers with different URLs/report numbers/dates/IDs resolve to a byte-
     mkdirSync(join(dir, 'reports'), { recursive: true });
     mkdirSync(join(dir, 'data'), { recursive: true });
 
+    installAdmissionFixture(dir);
     writeFileSync(join(batchDir, 'batch-runner.sh'), SRC);
     chmodSync(join(batchDir, 'batch-runner.sh'), 0o755);
 
