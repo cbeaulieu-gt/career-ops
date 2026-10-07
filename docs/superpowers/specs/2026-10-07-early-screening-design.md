@@ -23,4 +23,4 @@ Test metadata rejection before fetch/model dispatch; imported URL filtering; sco
 
 ## Non-goals
 
-No new live scan, paid evaluation batch, candidate-fact changes, score-threshold changes, application submissions or retroactive report/tracker edits. No target pass-rate guarantee. The plan remains an execution artifact until issue #66 closes, per the repository lifecycle rule.
+No new live scan, paid evaluation batch, candidate-fact changes, score-threshold changes, application submissions or retroactive report/tracker edits. No target pass-rate guarantee. The implementation and validation are preserved in [PR #67](https://github.com/cbeaulieu-gt/career-ops/pull/67). Issue #66 closed when that PR merged; the completed execution plan is retired under the repository lifecycle rule.
