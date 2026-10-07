@@ -46,6 +46,9 @@ MODEL=""  # explicit override; otherwise resolved from config/profile.yml spend_
 RESOLVED_MODEL=""
 RESOLVED_SPEND_TIER=""
 CLI=claude
+SCREEN_CLI=""
+SCREEN_MODEL=""
+ALLOW_STRETCH=false
 RATE_LIMIT_SLEEP=300
 BATCH_PAUSED=false
 STATUS_ONLY=false
@@ -66,7 +69,10 @@ spend_tier in config/profile.yml unless --model overrides it.
 Usage: batch-runner.sh [OPTIONS]
 
 Options:
-  --cli NAME           Agent CLI to use: claude (default), opencode, gemini, qwen
+  --cli NAME           Agent CLI to use: claude (default), codex, opencode, gemini, qwen
+  --screen-cli NAME    Read-only screening CLI: claude or codex (default: same CLI)
+  --screen-model NAME  Explicit economy screening model; never inherits --model
+  --allow-stretch      Permit stretch-role fit; source and eligibility gates remain
   --model NAME         Model for the CLI (e.g. qwen2.5:32b for opencode/ollama).
                        For claude, overrides the tier-resolved model (otherwise
                        config/profile.yml spend_tier: economy/standard/premium;
@@ -115,6 +121,9 @@ USAGE
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --cli) CLI="$2"; shift 2 ;;
+    --screen-cli) SCREEN_CLI="$2"; shift 2 ;;
+    --screen-model) SCREEN_MODEL="$2"; shift 2 ;;
+    --allow-stretch) ALLOW_STRETCH=true; shift ;;
     --parallel) PARALLEL="$2"; shift 2 ;;
     --dry-run) DRY_RUN=true; shift ;;
     --retry-failed) RETRY_FAILED=true; shift ;;
@@ -211,10 +220,11 @@ check_prerequisites() {
   local cli_cmd
   case "$CLI" in
     claude)   cli_cmd="claude" ;;
+    codex)    cli_cmd="codex" ;;
     opencode) command -v opencode &>/dev/null && cli_cmd="opencode" || cli_cmd="ollama" ;;
     gemini)   cli_cmd="gemini" ;;
     qwen)     cli_cmd="qwen" ;;
-    *) echo "ERROR: Unknown --cli '$CLI'. Supported: claude, opencode, gemini, qwen"; exit 1 ;;
+    *) echo "ERROR: Unknown --cli '$CLI'. Supported: claude, codex, opencode, gemini, qwen"; exit 1 ;;
   esac
 
   if ! command -v "$cli_cmd" &>/dev/null; then
@@ -829,6 +839,55 @@ reserve_report_num_retrying() {
 }
 
 # Process a single offer
+screen_offer() {
+  local phase="$1" id="$2" url="$3" source="$4" notes="$5" started="$6" retries="$7" jd_file="${8:-}"
+  local screen_cli="${SCREEN_CLI:-$CLI}"
+  local receipt_dir="$BATCH_DIR/screening"
+  mkdir -p "$receipt_dir"
+  local -a screen_args=(--url "$url" --source "$source" --notes "$notes" --cli "$screen_cli" --phase "$phase" --receipt "$receipt_dir/${id}.json")
+  [[ -n "$jd_file" ]] && screen_args+=(--jd-file "$jd_file")
+  [[ -n "$SCREEN_MODEL" ]] && screen_args+=(--screen-model "$SCREEN_MODEL")
+  [[ "$ALLOW_STRETCH" == "true" ]] && screen_args+=(--allow-stretch)
+  local output rc=0
+  output=$(node "$PROJECT_DIR/screen-job.mjs" "${screen_args[@]}" 2> "$receipt_dir/${id}-${phase}-errors.log") || rc=$?
+  local parsed decision reason
+  parsed=$(node -e '
+    try {
+      const v=JSON.parse(process.argv[1]);
+      if (!["shortlist","filtered","source_unconfirmed","inaccessible","needs_review","error"].includes(v.decision) || typeof v.reason !== "string" || !v.reason.trim()) throw Error("invalid verdict");
+      process.stdout.write(v.decision+"\t"+v.reason.replace(/[\t\r\n]/g," "));
+    } catch { process.stdout.write("error\tInvalid screening receipt; full evaluation was not started"); }
+  ' "$output")
+  IFS=$'\t' read -r decision reason <<< "$parsed"
+  if [[ "$rc" -ne 0 ]]; then
+    decision=error
+    reason="Screening command failed (exit $rc): $reason"
+  fi
+  # Even command/schema failures replace the prior metadata receipt: never leave
+  # a stale shortlist next to a failed state row.
+  node -e '
+    const fs=require("fs"),path=require("path"); let v;
+    try { v=JSON.parse(process.argv[1]); } catch { v={}; }
+    v.decision=process.argv[2];v.reason=process.argv[3];v.phase=v.phase||process.argv[4];v.url=process.argv[6];v.checked_at=new Date().toISOString();
+    const file=process.argv[5],tmp=file+".tmp-"+process.pid;
+    fs.writeFileSync(tmp,JSON.stringify(v,null,2)+"\n",{mode:0o600});fs.renameSync(tmp,file);
+  ' "$output" "$decision" "$reason" "$phase" "$receipt_dir/${id}.json" "$url"
+  if [[ "$decision" == "shortlist" ]]; then
+    echo "    Screening #$id ($phase): shortlisted"
+    return 0
+  fi
+  local status=skipped completed
+  completed=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  case "$decision" in
+    needs_review) status=needs_confirmation ;;
+    error) status=failed; retries=$((retries + 1)) ;;
+    *) log_discard "$id" "$url" "$decision: $reason" ;;
+  esac
+  update_state "$id" "$url" "$status" "$started" "$completed" "-" "-" "$decision: $reason" "$retries"
+  echo "    Screening #$id ($phase): $decision — $reason"
+  return 1
+}
+
 process_offer() {
   local id="$1" url="$2" source="$3" notes="$4"
 
@@ -837,8 +896,8 @@ process_offer() {
   local retries
   retries=$(get_retries "$id")
   local report_num
-  if ! report_num=$(reserve_report_num_retrying "$id" "$url" "$started_at" "$retries"); then
-    return 1
+  if ! screen_offer metadata "$id" "$url" "$source" "$notes" "$started_at" "$retries"; then
+    return 0
   fi
   local date
   date=$(date +%Y-%m-%d)
@@ -981,6 +1040,15 @@ process_offer() {
       fi
   fi
 
+  if ! screen_offer admission "$id" "$url" "$source" "$notes" "$started_at" "$retries" "$jd_file"; then
+    rm -f "$jd_file"
+    return 0
+  fi
+  if ! report_num=$(reserve_report_num_retrying "$id" "$url" "$started_at" "$retries"); then
+    rm -f "$jd_file"
+    return 1
+  fi
+
   echo "--- Processing offer #$id: $url (report $report_num, attempt $((retries + 1)))"
 
   # Build the prompt with placeholders replaced
@@ -1074,6 +1142,9 @@ process_offer() {
         else
           ollama launch opencode ${model_args[@]+"${model_args[@]}"} -y -- run "$full_prompt" > "$log_file" 2>&1 || exit_code=$?
         fi
+        ;;
+      codex)
+        printf '%s' "$full_prompt" | codex exec --sandbox workspace-write ${model_args[@]+"${model_args[@]}"} --color never -C "$PROJECT_DIR" - > "$log_file" 2>&1 || exit_code=$?
         ;;
       gemini)
         gemini ${model_args[@]+"${model_args[@]}"} -p "$full_prompt" > "$log_file" 2>&1 || exit_code=$?
@@ -1335,6 +1406,7 @@ merge_tracker() {
 print_summary() {
   echo ""
   echo "=== Batch Summary ==="
+  node "$BATCH_DIR/screening-summary.mjs" --batch-dir "$BATCH_DIR" || echo "Screening funnel unavailable"
 
   if [[ ! -f "$STATE_FILE" ]]; then
     echo "No state file found."

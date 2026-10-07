@@ -146,6 +146,14 @@ if (dispatchBlock) {
     } else {
       fail(`unexpected opencode argv with --model: ${JSON.stringify(args2)}`);
     }
+    // Codex receives the combined prompt on stdin, avoiding Windows argv limits.
+    writeFileSync(join(bin, 'codex'), '#!/usr/bin/env bash\nprintf \'ARG:%s\\n\' "$@"\nprintf \'STDIN:\'\ncat\n', { mode: 0o755 });
+    const codexScript = join(work, 'codex.sh');
+    writeFileSync(codexScript, buildScript('full-model').replace('CLI=opencode', 'CLI=codex\nPROJECT_DIR="."'));
+    const codexOut = execFileSync(bash, [codexScript], { encoding: 'utf8', timeout: 30000, env });
+    const codexLog = readFileSync(logFile, 'utf8');
+    if (/EXIT:0/.test(codexOut) && /ARG:exec\n/.test(codexLog) && /ARG:--model\nARG:full-model\n/.test(codexLog) && /ARG:-\nSTDIN:SYSTEM PROMPT\n\nJOB PROMPT$/.test(codexLog)) pass('Codex forwards its full model and sends the combined evaluation prompt on stdin');
+    else fail(`unexpected Codex dispatch: ${JSON.stringify(codexLog)}`);
   } finally {
     rmSync(work, { recursive: true, force: true });
   }

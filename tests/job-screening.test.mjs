@@ -10,6 +10,12 @@ const policy = {
 };
 const options = { portals, policy };
 
+test('invalid policy fails closed and requirements sections do not leak into responsibilities', () => {
+  assert.throws(() => screenMetadata({ title: 'Software Engineer' }, { policy: { reject_required: 'CUDA' } }), /reject_required/);
+  const result = screenMetadata({ title: 'Software Engineer', description: 'Minimum Qualifications\nPython\nResponsibilities\nCollaborate with CUDA specialists' }, options);
+  assert.equal(result.decision, 'shortlist');
+});
+
 test('a narrow employer exception never relaxes CUDA, seniority or another company', () => {
   assert.equal(passesScreeningTitle('Software Engineer, GPU Developer Tools', 'NVIDIA', portals.title_filter, policy), true);
   assert.equal(passesScreeningTitle('Software Engineer, CUDA Driver', 'NVIDIA', portals.title_filter, policy), false);

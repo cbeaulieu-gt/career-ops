@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { screenAdmission, buildScreeningPrompt, resolveScreeningModel, parseVerdictOutput } from '../screen-job.mjs';
+import { screenAdmission, buildScreeningPrompt, resolveScreeningModel, parseVerdictOutput, screeningArgs } from '../screen-job.mjs';
 
 const jd = 'Acme hires Software Engineers in the United States. Python experience required. ' + 'Build backend APIs and own production deployments. '.repeat(15);
 const context = {
@@ -9,6 +9,13 @@ const context = {
   cv: 'Python backend developer', targeting: 'Backend roles; Apply cutoff 4.0', cli: 'codex',
 };
 const verdict = { decision: 'shortlist', source: 'direct', location: 'eligible', reason: 'Relevant backend role', evidence: ['Python experience required.'] };
+
+test('Codex screening ignores configuration and uses ephemeral read-only stdin in an isolated directory', () => {
+  const args = screeningArgs('codex', 'economy-test', '/isolated');
+  for (const flag of ['--ignore-user-config', '--ephemeral', '--skip-git-repo-check', 'read-only']) assert.ok(args.includes(flag));
+  assert.equal(args.at(-1), '-');
+  assert.equal(args[args.indexOf('-C') + 1], '/isolated');
+});
 
 test('metadata rejection happens before fetching or invoking a model', async () => {
   const calls = [];

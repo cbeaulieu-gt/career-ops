@@ -76,6 +76,7 @@ import { localToday } from './lib/local-today.mjs';
 import { printScanSummaryHeader } from './lib/scan-summary-marker.mjs';
 import { isMainModule } from './lib/is-main-module.mjs';
 import { promoteKnownFragmentIdentity } from './url-key.mjs';
+import { passesScreeningTitle, screenMetadata } from './job-screening.mjs';
 
 try {
   const { config } = await import('dotenv');
@@ -1172,6 +1173,12 @@ export function loadCandidateCountry(profilePath = PROFILE_PATH) {
   } catch {
     return '';
   }
+}
+
+/** Read user-layer admission rules once per scan; invalid YAML must not broaden targeting. */
+export function loadScreeningPolicy(profilePath = PROFILE_PATH) {
+  if (!existsSync(profilePath)) return {};
+  return (yaml.load(readFileSync(profilePath, 'utf8')) || {}).screening || {};
 }
 
 export function loadReApplyWindows(profilePath = PROFILE_PATH) {
@@ -3509,6 +3516,7 @@ async function main() {
   // 3.5. Load the user's do-not-apply list (#1742). Opt-in: absent file =
   // empty Map = the filter below never fires.
   const blacklist = loadBlacklist();
+  const screeningPolicy = loadScreeningPolicy();
 
   // 4. Load dedup sets — one read per source file for the whole run (#2382).
   const historyPolicy = scanHistoryPolicy(config);
@@ -3657,7 +3665,7 @@ async function main() {
           }
         }
 
-        if (!titleFilter(job.title)) {
+        if (!titleFilter(job.title) && !passesScreeningTitle(job.title, job.company || company.name, config.title_filter, screeningPolicy, true)) {
           totalFilteredTitle++;
           continue;
         }
@@ -3693,6 +3701,12 @@ async function main() {
         }
         if (!visaFilter(job.description)) {
           totalFilteredVisa++;
+          continue;
+        }
+        const screening = screenMetadata({ ...job, titleEligible: true }, { portals: config, policy: screeningPolicy });
+        if (screening.decision !== 'shortlist') {
+          totalFilteredContent++;
+          if (!dryRun) appendFileSync(path.join(DATA_ROOT, 'data/discard.log'), `${new Date().toISOString()}\t${job.url}\t${screening.decision}: ${screening.reason.replace(/[\t\r\n]/g, ' ')}\n`);
           continue;
         }
         const dedupUrl = normalizeUrlForDedup(job.url);

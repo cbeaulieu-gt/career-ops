@@ -41,7 +41,7 @@
  *   node scan-ats-full.mjs --help               # print this usage block and exit
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, unlinkSync } from 'fs';
+import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync, statSync, unlinkSync } from 'fs';
 import { createHash } from 'crypto';
 import path from 'path';
 import * as yaml from 'js-yaml';
@@ -63,6 +63,8 @@ import { validateFlags } from './lib/cli-flags.mjs';
 import { isMainModule } from './lib/is-main-module.mjs';
 import { boardKey, loadDeadBoards, recordBoardResult, saveDeadBoards, shouldSkipDeadBoard } from './dead-boards.mjs';
 import { getCareerOpsRoot } from './path-resolver.mjs';
+import { loadScreeningPolicy } from './scan.mjs';
+import { screenMetadata, passesScreeningTitle } from './job-screening.mjs';
 
 // ── Config ──────────────────────────────────────────────────────────
 
@@ -504,14 +506,14 @@ export function resolveTitleFilterConfig(config) {
 // pure, exported helper keeps the content_filter.by_title_keyword wiring
 // (#1846) unit-testable without mocking providers or duplicating the rule
 // order in two places for the caller that doesn't need per-stage counts.
-export function passesFilters(job, { titleFilter, locationFilter, contentFilter, titleFilterConfig, companySlug }) {
-  if (!titleFilter(job.title, companySlug)) return false;
+export function passesFilters(job, { titleFilter, locationFilter, contentFilter, titleFilterConfig, companySlug, screeningPolicy = {} }) {
+  if (!titleFilter(job.title, companySlug) && !passesScreeningTitle(job.title, job.company || companySlug, titleFilterConfig, screeningPolicy, true)) return false;
   // job.url is passed so the location filter can fall back to the URL's own
   // location segment when the provider reports a rolled-up "N Locations" string;
   // job.title so a title-stated remote role survives a city-only location.
   if (!locationFilter(job.location, job.url, job.title)) return false;
   if (contentFilter && !contentFilter(job.description, matchedTitleKeywords(job.title, titleFilterConfig))) return false;
-  return true;
+  return screenMetadata({ ...job, titleEligible: true }, { policy: screeningPolicy }).decision === 'shortlist';
 }
 
 // Prefer a provider's own scoped dedup key over URL normalization when the
@@ -674,6 +676,7 @@ export async function runSeedScan(seedId, opts, ctx, seenUrls, label) {
         contentFilter: opts.contentFilter,
         companySlug: entry.name,
         titleFilterConfig: opts.titleFilterConfig,
+        screeningPolicy: opts.screeningPolicy,
       })) continue;
       // provider is always one of SEED_PROVIDERS (greenhouse/lever/ashby) here —
       // none currently define dedupKey, so this is the same normalizeUrlForDedup
@@ -824,6 +827,7 @@ async function main() {
   // Same content_filter (incl. by_title_keyword scoping) scan.mjs applies —
   // see #1846. Built once here from the same portals.yml config.
   const contentFilter = buildContentFilter(config?.content_filter);
+  const screeningPolicy = loadScreeningPolicy();
   if (!fullTitleFilterConfig?.positive?.length) {
     const key = config?.title_filter_full ? 'title_filter_full' : 'title_filter';
     console.error(`⚠️  portals.yml has no ${key}.positive — every fresh posting on every board will match. Consider adding keywords.`);
@@ -835,6 +839,7 @@ async function main() {
   // Raw title_filter config, needed by matchedTitleKeywords() to scope
   // content_filter.by_title_keyword the same way scan.mjs does.
   opts.titleFilterConfig = fullTitleFilterConfig;
+  opts.screeningPolicy = screeningPolicy;
 
   const atsSummary = opts.ats.length ? `ats: ${opts.ats.join(', ')}` : '';
   const seedsSummary = opts.seeds.length ? `seeds: ${opts.seeds.join(', ')}` : '';
@@ -1016,12 +1021,18 @@ async function main() {
       }
       if (dateClass === 'stale') continue;
       if (dateClass === 'undated' && !opts.includeUndated) { droppedNoDate++; continue; }
-      if (!titleFilter(job.title, companySlug)) continue;
+      if (!titleFilter(job.title, companySlug) && !passesScreeningTitle(job.title, job.company || companySlug, fullTitleFilterConfig, screeningPolicy, true)) continue;
       // job.url is passed so the location filter can fall back to the URL's own
       // location segment when the provider reports a rolled-up "N Locations" string;
       // job.title so a title-stated remote role survives a city-only location.
       if (!locationFilter(job.location, job.url, job.title)) continue;
       if (!contentFilter(job.description, matchedTitleKeywords(job.title, fullTitleFilterConfig))) { droppedContent++; continue; }
+      const screening = screenMetadata({ ...job, titleEligible: true }, { policy: screeningPolicy });
+      if (screening.decision !== 'shortlist') {
+        droppedContent++;
+        if (!opts.dryRun) appendFileSync(path.join(DATA_ROOT, 'data/discard.log'), `${new Date().toISOString()}\t${job.url}\t${screening.decision}: ${screening.reason.replace(/[\t\r\n]/g, ' ')}\n`);
+        continue;
+      }
       const dedupToken = dedupTokenFor(job, provider);
       if (seenUrls.has(dedupToken)) continue;
       seenUrls.add(dedupToken); // intra-scan dedup

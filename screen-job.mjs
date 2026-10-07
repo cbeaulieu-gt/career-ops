@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /** Read-only economy admission before full evaluation. Receipts contain no reports/CVs. */
-import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync, renameSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import * as yaml from 'js-yaml';
 import { getCareerOpsRoot } from './path-resolver.mjs';
@@ -72,28 +73,43 @@ export async function screenAdmission(job, context, dependencies = {}) {
   }
 }
 
-/** Execute a tool-free Claude prompt or a read-only Codex prompt with bounded output/time. */
-export function runScreeningModel({ model, prompt, cli, cwd = CODE_ROOT }) {
+/** Prompts use stdin; isolation excludes project agents, hooks and MCP configuration. */
+export function screeningArgs(cli, model, cwd) {
   if (!['claude', 'codex'].includes(cli)) throw new Error(`Read-only screening is not configured for ${cli}; use a supported screening CLI`);
-  const args = cli === 'claude'
+  return cli === 'claude'
     ? ['-p', '--model', model, '--strict-mcp-config', '--tools', '', '--output-format', 'text']
-    : ['exec', '--ignore-user-config', '--sandbox', 'read-only', '--model', model, '-c', 'model_reasoning_effort=low', '-c', 'approval_policy=never', '--color', 'never', '-C', cwd, '-'];
-  return new Promise((done, reject) => {
+    : ['exec', '--ignore-user-config', '--ephemeral', '--skip-git-repo-check', '--sandbox', 'read-only', '--model', model, '-c', 'model_reasoning_effort=low', '-c', 'approval_policy=never', '--color', 'never', '-C', cwd, '-'];
+}
+
+/** Execute a tool-free Claude prompt or a read-only Codex prompt with bounded output/time. */
+export async function runScreeningModel({ model, prompt, cli }) {
+  const cwd = mkdtempSync(join(tmpdir(), 'career-screen-'));
+  try {
+    const args = screeningArgs(cli, model, cwd);
+    return await new Promise((done, reject) => {
     // On Windows use the executable JS entrypoint for npm-installed CLIs; no cmd shell interpolation.
     const npmScript = process.platform === 'win32'
       ? join(process.env.APPDATA || '', cli === 'codex' ? 'npm/node_modules/@openai/codex/bin/codex.js' : 'npm/node_modules/@anthropic-ai/claude-code/cli.js') : null;
     const child = spawn(npmScript && existsSync(npmScript) ? process.execPath : cli,
       npmScript && existsSync(npmScript) ? [npmScript, ...args] : args,
-      { cwd, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+      { cwd, shell: false, windowsHide: true, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '', stderr = '', stopped = false;
-    const timer = setTimeout(() => { stopped = true; child.kill(); reject(new Error('Screening worker timed out')); }, 120000);
-    child.stdout.on('data', chunk => { stdout += chunk; if (stdout.length > 1000000) { stopped = true; child.kill(); reject(new Error('Screening output exceeds limit')); } });
+    const stop = message => {
+      if (stopped) return;
+      stopped = true;
+      clearTimeout(timer);
+      if (child.pid && process.platform === 'win32') execFile('taskkill', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true }, () => reject(new Error(message)));
+      else { try { if (child.pid) process.kill(-child.pid, 'SIGKILL'); } catch { child.kill(); } reject(new Error(message)); }
+    };
+    const timer = setTimeout(() => stop('Screening worker timed out'), 120000);
+    child.stdout.on('data', chunk => { stdout += chunk; if (stdout.length > 1000000) stop('Screening output exceeds limit'); });
     child.stderr.on('data', chunk => { if (stderr.length < 10000) stderr += chunk; });
     child.on('error', err => { clearTimeout(timer); reject(err); });
     child.on('close', code => { clearTimeout(timer); if (stopped) return; if (code !== 0) reject(new Error(`Screening worker exited ${code}: ${stderr.trim().slice(-500)}`)); else done(stdout); });
     child.stdin.on('error', () => {});
     child.stdin.end(prompt);
-  });
+    });
+  } finally { rmSync(cwd, { recursive: true, force: true }); }
 }
 
 /** Reuse public ATS/browser extraction, never ask an evaluation worker to fetch a shell. */
