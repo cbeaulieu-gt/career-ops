@@ -69,6 +69,7 @@ batch/tracker-additions/**/*.tsv
 # Worker scratch: prefetched JD text plus whatever compile cache the worker CLI
 # drops here. Fetched postings are user data — never stage them.
 batch/tmp/
+.superpowers/
 /jds
 jds/*
 !jds/.gitkeep

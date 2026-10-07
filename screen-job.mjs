@@ -15,6 +15,16 @@ const CODE_ROOT = dirname(fileURLToPath(import.meta.url));
 const read = path => existsSync(path) ? readFileSync(path, 'utf8') : '';
 const load = path => yaml.load(read(path)) ?? {};
 
+/** Reviewed assertions are a trusted upstream handoff, never fields inferred from JD text. */
+export function reviewedMetadata(value, url) {
+  if (!value || value.url !== url) throw new Error('Reviewed metadata URL must match this exact posting');
+  if (!['user-confirmed', 'provider-verified'].includes(value.provenance)) throw new Error('Reviewed metadata requires explicit provenance');
+  if (!['direct', 'agency', 'unknown', 'unconfirmed'].includes(value.hiring_source)) throw new Error('Reviewed metadata requires hiring_source');
+  if (typeof value.locationEligible !== 'boolean' || (value.workAuthorizationEligible !== undefined && typeof value.workAuthorizationEligible !== 'boolean')) throw new Error('Reviewed eligibility fields must be boolean');
+  for (const key of ['source_evidence', 'location_evidence']) if (typeof value[key] !== 'string' || value[key].trim().length < 8) throw new Error(`Reviewed metadata needs ${key} evidence`);
+  return Object.fromEntries(['url', 'company', 'title', 'location', 'hiring_source', 'locationEligible', 'workAuthorizationEligible', 'source_evidence', 'location_evidence', 'provenance'].filter(key => value[key] !== undefined).map(key => [key, value[key]]));
+}
+
 /** Explicit economy model routing; never use the full evaluation model by accident. */
 export function resolveScreeningModel(cli, profile, override = '') {
   const model = override || profile?.screening?.models?.[cli] || (cli === 'claude' ? 'haiku' : '');
@@ -50,17 +60,20 @@ export async function screenAdmission(job, context, dependencies = {}) {
   const options = { portals: context.portals, policy, allowStretch: context.allowStretch };
   const metadata = screenMetadata(job, options);
   if (metadata.decision !== 'shortlist') return { ...metadata, phase: 'metadata' };
-  if (job.location && context.locationFilter && !context.locationFilter(job.location, job.url, job.title)) return { decision: 'filtered', reason: 'Location fails configured filter', evidence: [job.location], phase: 'metadata' };
-  const description = job.description || await dependencies.fetchJD?.(job.url) || '';
+  if (context.locationFilter && !context.locationFilter(job.location || '', job.url, job.title)) return { decision: 'filtered', reason: 'Location/URL fails configured filter', evidence: [job.location || job.url], phase: 'metadata' };
+  let description;
+  try { description = job.description || await dependencies.fetchJD?.(job.url) || ''; }
+  catch (err) { return { decision: 'error', reason: `JD extraction failed: ${err.message}`, evidence: [], phase: 'extraction' }; }
   if (description.trim().split(/\s+/).length < 80) return { decision: 'inaccessible', reason: 'No substantive JD after API/browser extraction', evidence: [], phase: 'extraction' };
   const withJD = { ...job, description };
+  if (context.eligibilityFilter && !context.eligibilityFilter(description)) return { decision: 'filtered', reason: 'JD fails configured country or visa eligibility filter', evidence: [], phase: 'eligibility', jd: description };
   if (!context.allowStretch && context.contentFilter && !context.contentFilter(description)) return { decision: 'filtered', reason: 'JD fails configured content filter', evidence: [], phase: 'requirements', jd: description };
   const deterministic = screenMetadata(withJD, options);
   if (deterministic.decision !== 'shortlist') return { ...deterministic, phase: 'requirements', jd: description };
   if (context.profile?.spend_tier === 'economy') {
     // Economy still needs evidence of source and eligibility; no extra model call.
     if (job.hiring_source !== 'direct' || job.locationEligible !== true) return { decision: 'needs_review', reason: 'Economy admission requires explicit direct-source and location evidence', evidence: [], phase: 'eligibility', jd: description };
-    return { ...deterministic, phase: 'economy', jd: description };
+    return { ...deterministic, evidence: [job.source_evidence, job.location_evidence].filter(Boolean), phase: 'economy', jd: description };
   }
   try {
     if (!context.cv?.trim() || !context.targeting?.trim()) throw new Error('Candidate CV and targeting are required for fit screening');
@@ -77,7 +90,7 @@ export async function screenAdmission(job, context, dependencies = {}) {
 export function screeningArgs(cli, model, cwd) {
   if (!['claude', 'codex'].includes(cli)) throw new Error(`Read-only screening is not configured for ${cli}; use a supported screening CLI`);
   return cli === 'claude'
-    ? ['-p', '--model', model, '--strict-mcp-config', '--tools', '', '--output-format', 'text']
+    ? ['-p', '--model', model, '--setting-sources', '', '--disable-slash-commands', '--no-session-persistence', '--strict-mcp-config', '--tools', '', '--output-format', 'text']
     : ['exec', '--ignore-user-config', '--ephemeral', '--skip-git-repo-check', '--sandbox', 'read-only', '--model', model, '-c', 'model_reasoning_effort=low', '-c', 'approval_policy=never', '--color', 'never', '-C', cwd, '-'];
 }
 
@@ -113,16 +126,29 @@ export async function runScreeningModel({ model, prompt, cli }) {
 }
 
 /** Reuse public ATS/browser extraction, never ask an evaluation worker to fetch a shell. */
+export function browserJDResult(error, output, stderr) {
+  if (error) {
+    for (const line of String(stderr).trim().split(/\r?\n/).reverse()) {
+      try { if (JSON.parse(line).code === 'empty_text') return ''; } catch { /* stderr may include browser diagnostics */ }
+    }
+    throw new Error(`Browser extraction command failed: ${String(stderr || error.message).trim().slice(-500)}`);
+  }
+  let result;
+  try { result = JSON.parse(output); } catch { throw new Error('Invalid browser extraction JSON'); }
+  if (typeof result?.text !== 'string') throw new Error('Invalid browser extraction text');
+  return result.text;
+}
+
 async function fetchJD(url) {
   const { fetchJdViaKnownApi } = await import('./browser-extract.mjs');
   const result = await fetchJdViaKnownApi(url, 30000, 15000);
   if (result?.text) return result.text;
   const { execFile } = await import('node:child_process');
-  return new Promise(resolveResult => {
+  return new Promise((resolveResult, reject) => {
     execFile(process.execPath, [join(CODE_ROOT, 'browser-extract.mjs'), url, '--mode', 'jd', '--max-chars', '30000'],
-      { cwd: CODE_ROOT, timeout: 45000, maxBuffer: 1000000, windowsHide: true }, (err, output) => {
-        if (err) return resolveResult('');
-        try { resolveResult(JSON.parse(output).text || ''); } catch { resolveResult(''); }
+      { cwd: CODE_ROOT, timeout: 45000, maxBuffer: 1000000, windowsHide: true }, (err, output, stderr) => {
+        try { resolveResult(browserJDResult(err, output, stderr)); }
+        catch (error) { reject(error); }
       });
   });
 }
@@ -138,7 +164,7 @@ async function main() {
   const args = process.argv.slice(2), values = {};
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--allow-stretch') { values.allowStretch = true; continue; }
-    if (!['--url', '--notes', '--source', '--cli', '--phase', '--jd-file', '--receipt', '--screen-model'].includes(args[i]) || i + 1 >= args.length) throw new Error(`Unknown or incomplete screening option: ${args[i]}`);
+    if (!['--url', '--notes', '--source', '--cli', '--phase', '--jd-file', '--job-file', '--receipt', '--screen-model'].includes(args[i]) || i + 1 >= args.length) throw new Error(`Unknown or incomplete screening option: ${args[i]}`);
     values[args[i].slice(2)] = args[++i];
   }
   if (!values.url) throw new Error('--url is required');
@@ -146,8 +172,9 @@ async function main() {
   const profile = load(process.env.CAREER_OPS_PROFILE || join(root, 'config/profile.yml'));
   const portals = load(process.env.CAREER_OPS_PORTALS || join(root, 'portals.yml'));
   const fields = (values.notes || '').split('|').map(text => text.trim());
-  const job = { url: values.url, company: fields.length > 1 ? fields[0] : '', title: fields.length > 1 ? fields[1] : '', description: values['jd-file'] ? read(values['jd-file']) : '' };
-  const { buildLocationFilter, buildContentFilter, matchedTitleKeywords, loadBlacklist, findBlacklistEntry, buildTitleFilterOverrides, buildTitleFilterWithOverrides } = await import('./scan.mjs');
+  const reviewed = values['job-file'] ? reviewedMetadata(JSON.parse(readFileSync(values['job-file'], 'utf8')), values.url) : {};
+  const job = { ...reviewed, url: values.url, company: fields.length > 1 ? fields[0] : reviewed.company || '', title: fields.length > 1 ? fields[1] : reviewed.title || '', discovery_source: values.source || '', description: values['jd-file'] ? read(values['jd-file']) : '' };
+  const { buildLocationFilter, buildContentFilter, buildCountryEligibilityFilter, buildVisaFilter, matchedTitleKeywords, loadBlacklist, findBlacklistEntry, buildTitleFilterOverrides, buildTitleFilterWithOverrides } = await import('./scan.mjs');
   if (job.title) {
     const titleFilter = buildTitleFilterWithOverrides(portals.title_filter, buildTitleFilterOverrides(portals.title_filter_overrides));
     if (titleFilter(job.title, job.company.toLowerCase())) job.titleEligible = true;
@@ -161,6 +188,7 @@ async function main() {
       portals, profile, cli: values.cli || 'claude', modelOverride: values['screen-model'], allowStretch: values.allowStretch,
       cv: read(join(root, 'cv.md')), targeting: read(join(root, 'modes/_profile.md')),
       locationFilter: buildLocationFilter(portals.location_filter),
+      eligibilityFilter: description => buildCountryEligibilityFilter(portals.country_eligibility_filter, profile.location?.country)(description) && buildVisaFilter(portals.visa_filter)(description),
       contentFilter: description => buildContentFilter(portals.content_filter)(description, matchedTitleKeywords(job.title, portals.title_filter)),
     }, {
       fetchJD, runModel: settings => runScreeningModel({ ...settings, cli: values.cli || 'claude' }),
@@ -168,7 +196,7 @@ async function main() {
     if (result.jd && values['jd-file']) writeFileSync(values['jd-file'], result.jd, { mode: 0o600 });
   }
   const { jd, ...receipt } = result;
-  const output = { ...receipt, url: job.url, company: job.company, title: job.title, checked_at: new Date().toISOString() };
+  const output = { ...receipt, url: job.url, company: job.company, title: job.title, reviewed_metadata: Object.keys(reviewed).length ? reviewed : null, checked_at: new Date().toISOString() };
   if (values.receipt) saveReceipt(resolve(values.receipt), output);
   console.log(JSON.stringify(output));
 }

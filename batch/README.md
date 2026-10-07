@@ -31,6 +31,10 @@ Process multiple job offers in parallel via headless workers. Each worker runs t
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--parallel N` | `1` | Number of concurrent headless workers |
+| `--cli NAME` | `claude` | Full worker CLI: Claude, Codex, OpenCode, Gemini or Qwen |
+| `--screen-cli NAME` | same CLI | Separate screening CLI: Claude or Codex |
+| `--screen-model NAME` | profile mapping | Explicit economy admission model, separate from `--model` |
+| `--allow-stretch` | off | Relax role fit only; retain source, blacklist and eligibility gates |
 | `--dry-run` | off | Preview pending offers without processing |
 | `--retry-failed` | off | Only retry offers marked as `failed` in state |
 | `--resume-paused` | off | Resume offers paused after a Claude session/rate limit |
@@ -79,7 +83,7 @@ batch/
 ## How It Works
 
 1. **batch-runner.sh** reads `batch-input.tsv` and `batch-state.tsv` to determine which offers need processing.
-2. For each pending offer, it assigns a report number and launches a headless worker with `batch-prompt.md` as the system prompt. Placeholders like `{{URL}}`, `{{REPORT_NUM}}` resolve to stable labels (e.g. `<URL from the job message>`), not the concrete value, so the resolved system prompt is byte-identical across offers and prompt caching can reuse it. The actual URL, JD file, report number, date and batch ID are passed separately in the per-job message the worker also receives.
+2. For each pending offer, it checks metadata, extracts the JD, and runs admission **before** assigning a report number or launching the full worker. Standard/premium admission uses a separate economy model. See [screening policy](../docs/screening.md) for configuration and economy-mode review behavior. Only an admission shortlist reaches the headless worker with `batch-prompt.md`; concrete URL/JD/report/date/batch values remain in the per-job message.
 3. Each worker evaluates the offer, writes a report to `reports/`, generates a PDF to `output/`, and writes a tracker TSV to `tracker-additions/`.
 4. After all workers finish, batch-runner calls `merge-tracker.mjs` to merge TSVs into `data/applications.md`, `reconcile-pipeline.mjs` to move processed offers out of the `data/pipeline.md` inbox, and `verify-pipeline.mjs` to check integrity.
 

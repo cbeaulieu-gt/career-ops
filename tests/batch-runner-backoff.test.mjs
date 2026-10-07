@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { getBash, rmSync } from './helpers.mjs';
+import { getBash, rmSync, installAdmissionFixture } from './helpers.mjs';
 
 const source = readFileSync(new URL('../batch/batch-runner.sh', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const functions = source.slice(source.indexOf('is_rate_limit_log() {'), source.indexOf('reserve_report_num_unlocked() {'));
@@ -147,6 +147,7 @@ test('successful, non-rate-limit and non-Claude workers do not back off', () => 
 
 test('full runner resumes persisted retries and schedules paused rows only with --resume-paused', () => fixture(({ dir, invoke }) => {
   mkdirSync(join(dir, 'batch'));
+  installAdmissionFixture(dir);
   writeFileSync(join(dir, 'batch/batch-runner.sh'), source);
   writeFileSync(join(dir, 'batch/batch-prompt.md'), 'Fixture prompt');
   writeFileSync(join(dir, 'batch/batch-input.tsv'), 'id\turl\tsource\tnotes\n1\thttps://example.com/job\ttest\tfixture\n');

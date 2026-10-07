@@ -133,6 +133,20 @@ language:
 # See the tier -> model mapping table in modes/_shared.md.
 spend_tier: standard
 
+# Optional early-admission policy. See docs/screening.md. Leave specialty
+# rejection terms empty until reviewed against YOUR CV and targeting.
+# screening:
+#   unknown_source: review         # or skip, when unknown sources are unwanted
+#   models:
+#     claude: haiku
+#     codex: YOUR_ECONOMY_MODEL    # required for Codex; never inherits full model
+#   reject_required: []
+#   supported_alternatives: []
+#   agency_companies: []
+#   unconfirmed_urls: []
+#   excluded_urls: []
+#   title_exceptions: []
+
 # (Optional) Paper size for every generated PDF: "letter" or "a4".
 # One setting for the CV, the cover letter and the HTML body width, so they
 # cannot disagree. Absent means letter. An explicit --format flag or a payload

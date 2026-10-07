@@ -1,0 +1,1358 @@
+{
+  "source_issue": "https://github.com/cbeaulieu-gt/career-ops/issues/66",
+  "checked_date": "2026-10-07",
+  "scope": "Offline deterministic gates only; no model calls, live fetches or run-state writes",
+  "counts": {
+    "discovered": 99,
+    "filtered": 18,
+    "source_unconfirmed": 9,
+    "needs_review": 0,
+    "missing_evidence": 28,
+    "needs_fit_screening": 44,
+    "missing_jd_evidence": 45,
+    "historical_full_evaluations": 54,
+    "full_evaluations_avoided": 10
+  },
+  "historical_apply": [
+    {
+      "id": "1",
+      "company": "Microsoft",
+      "title": "Sr. Software Engineering",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "495",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "2",
+      "company": "Microsoft",
+      "title": "Senior Software Engineer - Git Systems Engineering (GitHub - CoreAI)",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "497",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "6",
+      "company": "GitHub",
+      "title": "Senior Software Engineer, Data Engineering",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "503",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "8",
+      "company": "GitHub",
+      "title": "Senior Software Engineer,Billing",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "505",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "12",
+      "company": "GitHub",
+      "title": "Senior Software Engineer, Copilot Code Review",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "509",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "13",
+      "company": "GitHub",
+      "title": "Software Engineer III, Copilot Models Inference",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "510",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "69",
+      "company": "Snowflake",
+      "title": "Sr. Software Engineer, Customer Experience Engineering",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "569",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "84",
+      "company": "Close",
+      "title": "\\[Remote\\] Senior Software Engineer – Backend (USA Only, 100% Remote)",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "579",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    }
+  ],
+  "jobs": [
+    {
+      "id": "1",
+      "company": "Microsoft",
+      "title": "Sr. Software Engineering",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "495",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "2",
+      "company": "Microsoft",
+      "title": "Senior Software Engineer - Git Systems Engineering (GitHub - CoreAI)",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "497",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "3",
+      "company": "Microsoft",
+      "title": "Senior Software Engineer - Maia Model Enablement",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "496",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "4",
+      "company": "Microsoft",
+      "title": "Senior Software Engineer- AI Frameworks",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "498",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "5",
+      "company": "GitHub",
+      "title": "Senior Systems Engineer, Database Infrastructure",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "499",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "6",
+      "company": "GitHub",
+      "title": "Senior Software Engineer, Data Engineering",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "503",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "7",
+      "company": "GitHub",
+      "title": "Senior Software Engineer, Observability Delivery",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "504",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "8",
+      "company": "GitHub",
+      "title": "Senior Software Engineer,Billing",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "505",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "9",
+      "company": "GitHub",
+      "title": "Senior Software Engineer, Mission Control",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "506",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "10",
+      "company": "GitHub",
+      "title": "Senior Software Engineer, Elasticsearch",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "507",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "11",
+      "company": "GitHub",
+      "title": "Senior Software Engineer, Identity Platform",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "508",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "12",
+      "company": "GitHub",
+      "title": "Senior Software Engineer, Copilot Code Review",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "509",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "13",
+      "company": "GitHub",
+      "title": "Software Engineer III, Copilot Models Inference",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "510",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "14",
+      "company": "OpenAI",
+      "title": "Applied AI Engineer, Enterprise",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "511",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "15",
+      "company": "OpenAI",
+      "title": "Software Engineer, Host Assurance",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "512",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "16",
+      "company": "OpenAI",
+      "title": "Software Engineer, Infrastructure Security",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "513",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "17",
+      "company": "OpenAI",
+      "title": "Software Engineer, Security Observability",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "514",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "18",
+      "company": "NVIDIA Corporation",
+      "title": "Senior Software Engineer, Object Storage - DGX Cloud",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "515",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "19",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, Distributed Systems Engineering - DGX Cloud",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "516",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "20",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, Agentic AI",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "517",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "21",
+      "company": "NVIDIA",
+      "title": "Senior Storage Software Engineer - DGX Cloud",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "518",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "22",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer - DGX Cloud",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "519",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "23",
+      "company": "NVIDIA",
+      "title": "Graphics System Software Engineer",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "520",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "24",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, SRE and Production Engineering - DGX Cloud",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "521",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "25",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, Kubernetes Runtime and Release",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "522",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "26",
+      "company": "NVIDIA",
+      "title": "Senior Data and Platform Engineer",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "523",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "27",
+      "company": "NVIDIA",
+      "title": "Data and Platform Engineer",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "524",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "28",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, Network Visibility Platform - DGX Cloud",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "525",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "29",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, Test - Autonomous Vehicles",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "526",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "30",
+      "company": "NVIDIA",
+      "title": "AI Software Engineer, Lightspeed Studios",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "527",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "31",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, DGX Cloud Production Engineering",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "528",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "32",
+      "company": "NVIDIA",
+      "title": "Senior Data Engineer - Financial Transactions & Automation",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "529",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "33",
+      "company": "NVIDIA",
+      "title": "Senior System Software Engineer, Software-Defined Networking",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "530",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "34",
+      "company": "NVIDIA",
+      "title": "Senior System Software Engineer, Software Defined Networking",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "531",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "35",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer – Streaming",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "532",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "36",
+      "company": "NVIDIA",
+      "title": "Senior System Software Engineer, NvSci",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "533",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "37",
+      "company": "NVIDIA",
+      "title": "System Software Engineer, Profiler - GPU",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "System Software Engineer, Profiler - GPU"
+      ],
+      "historical_status": "completed",
+      "historical_report": "534",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "38",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, Graphics Performance",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "535",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "39",
+      "company": "NVIDIA",
+      "title": "Senior Systems Software Engineer, CUDA Driver",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Systems Software Engineer, CUDA Driver"
+      ],
+      "historical_status": "completed",
+      "historical_report": "536",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "40",
+      "company": "NVIDIA",
+      "title": "Software Engineer, DGX Cloud AI Infrastructure",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Software Engineer, DGX Cloud AI Infrastructure"
+      ],
+      "historical_status": "completed",
+      "historical_report": "537",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "41",
+      "company": "NVIDIA",
+      "title": "Software Engineer, CUDA Deep Learning Systems",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Software Engineer, CUDA Deep Learning Systems"
+      ],
+      "historical_status": "completed",
+      "historical_report": "538",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "42",
+      "company": "NVIDIA",
+      "title": "Senior Deep Learning Software Infrastructure Engineer",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "539",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "43",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer - Traffic and Networking",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "540",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "44",
+      "company": "NVIDIA",
+      "title": "Senior System Software Engineer - GPU Performance",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior System Software Engineer - GPU Performance"
+      ],
+      "historical_status": "completed",
+      "historical_report": "541",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "45",
+      "company": "NVIDIA",
+      "title": "Senior Deep Learning Software Engineer, Inference",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "542",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "46",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, CUDA C++ Core Libraries",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Software Engineer, CUDA C++ Core Libraries"
+      ],
+      "historical_status": "completed",
+      "historical_report": "543",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "47",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, System Validation - EDA Infrastructure",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "544",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "48",
+      "company": "NVIDIA",
+      "title": "Senior Deep Learning Frameworks CUDA Software Engineer",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Deep Learning Frameworks CUDA Software Engineer"
+      ],
+      "historical_status": "failed",
+      "historical_report": "545",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "49",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, DGX Cloud AI Infrastructure",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Software Engineer, DGX Cloud AI Infrastructure"
+      ],
+      "historical_status": "failed",
+      "historical_report": "546",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "50",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, CUDA Python Core Libraries",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Software Engineer, CUDA Python Core Libraries"
+      ],
+      "historical_status": "completed",
+      "historical_report": "547",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "51",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, CUDA Rust Core Libraries",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Software Engineer, CUDA Rust Core Libraries"
+      ],
+      "historical_status": "failed",
+      "historical_report": "548",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "52",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, CUDA Deep Learning Systems",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Software Engineer, CUDA Deep Learning Systems"
+      ],
+      "historical_status": "failed",
+      "historical_report": "549",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "53",
+      "company": "NVIDIA",
+      "title": "Senior Systems Software Engineer, Containers and Kubernetes",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "550",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "54",
+      "company": "NVIDIA",
+      "title": "Senior System Software Engineer - GPU Power Management",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior System Software Engineer - GPU Power Management"
+      ],
+      "historical_status": "failed",
+      "historical_report": "551",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "55",
+      "company": "NVIDIA",
+      "title": "Senior System Software Engineer - Datacenter Power Management",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "552",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "56",
+      "company": "NVIDIA",
+      "title": "Senior System Software Engineer, CUDA Driver for Windows",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior System Software Engineer, CUDA Driver for Windows"
+      ],
+      "historical_status": "failed",
+      "historical_report": "553",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "57",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer - Image and Data Processing Libraries",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "554",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "58",
+      "company": "NVIDIA",
+      "title": "Senior System Software Engineer - Dynamo-Triton Inference Server",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "555",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "59",
+      "company": "NVIDIA",
+      "title": "Senior Systems Software Engineer - GPU Performance at Scale",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Systems Software Engineer - GPU Performance at Scale"
+      ],
+      "historical_status": "failed",
+      "historical_report": "556",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "60",
+      "company": "NVIDIA",
+      "title": "Senior Software Systems Engineer, L3 and L4 - Autonomous Driving",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "557",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "61",
+      "company": "NVIDIA",
+      "title": "Senior Software Engineer, C++ and CUDA - Analytics and Data Intelligence",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Software Engineer, C++ and CUDA - Analytics and Data Intelligence"
+      ],
+      "historical_status": "completed",
+      "historical_report": "561",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "62",
+      "company": "NVIDIA",
+      "title": "Senior Systems Software Engineer, CUDA Driver - Multi-Node and Memory Model",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior Systems Software Engineer, CUDA Driver - Multi-Node and Memory Model"
+      ],
+      "historical_status": "completed",
+      "historical_report": "562",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "63",
+      "company": "NVIDIA",
+      "title": "Senior AI Infrastructure Engineer - EDA Infrastructure",
+      "decision": "filtered",
+      "reason": "Title does not meet configured targeting",
+      "evidence": [
+        "Senior AI Infrastructure Engineer - EDA Infrastructure"
+      ],
+      "historical_status": "completed",
+      "historical_report": "563",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "64",
+      "company": "Compass",
+      "title": "Senior Software Engineer II",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "564",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "65",
+      "company": "Ditto",
+      "title": "Senior Software Engineer, Database",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "565",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "66",
+      "company": "Owner.com",
+      "title": "Remote Senior Software Engineer, Mobile Platform - Guest App (Remote, United States)",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "566",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "67",
+      "company": "H&R Block",
+      "title": "Senior Software Engineer",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "567",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "68",
+      "company": "RemoteJobsOne",
+      "title": "Remote Senior Software Engineer (Contract) — AI Task Designer",
+      "decision": "filtered",
+      "reason": "Posting explicitly excluded by the user",
+      "evidence": [
+        "https://www.jobleads.com/us/job/remote-senior-software-engineer-contract-ai-task-designer--chicago--e61ee3590ed95ef4db8acd517b5733032"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "69",
+      "company": "Snowflake",
+      "title": "Sr. Software Engineer, Customer Experience Engineering",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "569",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "70",
+      "company": "Stripe",
+      "title": "Machine Learning Engineer, Growth Platform",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "570",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "71",
+      "company": "Givelify",
+      "title": "Senior Software Engineer - Machine Learning and AI",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "571",
+      "historical_decision": "Research first",
+      "archived_jd_available": true
+    },
+    {
+      "id": "72",
+      "company": "Georgia Tek Systems",
+      "title": "Machine Learning Engineer/SRE-100% Remote",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "572",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "73",
+      "company": "Insight Global",
+      "title": "REMOTE AI/ML Engineer II",
+      "decision": "source_unconfirmed",
+      "reason": "Hiring source is unknown or unconfirmed",
+      "evidence": [
+        "Insight Global"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "74",
+      "company": "UST",
+      "title": "Machine Learning Engineer",
+      "decision": "source_unconfirmed",
+      "reason": "Hiring source is unknown or unconfirmed",
+      "evidence": [
+        "UST"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "75",
+      "company": "Ciklum",
+      "title": "Expert Artificial Intelligence/Machine Learning Engineer",
+      "decision": "source_unconfirmed",
+      "reason": "Hiring source is unknown or unconfirmed",
+      "evidence": [
+        "Ciklum"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "76",
+      "company": "Encora",
+      "title": "Remote ML Engineer: Scale Production ML Pipelines",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "573",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "77",
+      "company": "Instacart",
+      "title": "Senior Machine Learning Engineer II, Search and Recommendations Ranking at Instacart: 100% Remote (US)",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "574",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "78",
+      "company": "Placements24",
+      "title": "Remote Computer Vision ML Engineer",
+      "decision": "source_unconfirmed",
+      "reason": "Hiring source is unknown or unconfirmed",
+      "evidence": [
+        "Placements24"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "79",
+      "company": "AssetWatch, Inc.",
+      "title": "Machine Learning Engineer, Predictive Maintenance",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "575",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "80",
+      "company": "Pinterest",
+      "title": "Sr. Machine Learning Engineer, Applied Science",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "576",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "81",
+      "company": "EDB",
+      "title": "Machine Learning Engineer (Governance ML Platform)",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "577",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "82",
+      "company": "AIToolboard",
+      "title": "Remote Artificial Intelligence & Machine Learning Engineer - Meetings in Annapolis, MD",
+      "decision": "source_unconfirmed",
+      "reason": "Hiring source is unknown or unconfirmed",
+      "evidence": [
+        "AIToolboard"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "83",
+      "company": "VetsEZ",
+      "title": "Backend Engineer (Remote Opportunity) (Remote)",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "578",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "84",
+      "company": "Close",
+      "title": "\\[Remote\\] Senior Software Engineer – Backend (USA Only, 100% Remote)",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "579",
+      "historical_decision": "Apply",
+      "archived_jd_available": true
+    },
+    {
+      "id": "85",
+      "company": "Coinbase",
+      "title": "Senior Software Engineer, Backend - Payments Platform",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "580",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "86",
+      "company": "Resend",
+      "title": "Backend Engineer, MTA",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "581",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "87",
+      "company": "Procom",
+      "title": "Remote AI Backend Engineer: Production Inference",
+      "decision": "source_unconfirmed",
+      "reason": "Hiring source is unknown or unconfirmed",
+      "evidence": [
+        "Procom"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "88",
+      "company": "Affirm",
+      "title": "Senior Software Engineer, backend (Online Storage)",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "582",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "89",
+      "company": "PlanetScale",
+      "title": "Remote Backend Engineer: Distributed DB Infrastructure (Go)",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "583",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "90",
+      "company": "WISEcode",
+      "title": "Software Developer & Data Engineer",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "584",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "91",
+      "company": "Temporal Technologies",
+      "title": "Software Engineer II, Open Source Server",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "585",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    },
+    {
+      "id": "92",
+      "company": "Bright Vision Technologies",
+      "title": "Full Stack Software Engineer – .NET",
+      "decision": "source_unconfirmed",
+      "reason": "Hiring source is unknown or unconfirmed",
+      "evidence": [
+        "Bright Vision Technologies"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "93",
+      "company": "remote quest jobs",
+      "title": "Backend Engineer (Jr/Mid Level) - Golang",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "586",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "94",
+      "company": "GitLab",
+      "title": "Intermediate Backend Engineer, Pipeline Authoring",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "587",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "95",
+      "company": "Everforth, Cybercoders",
+      "title": "Senior Backend Software Engineer - Python, Golang, APIs- REMOTE",
+      "decision": "missing_evidence",
+      "reason": "No substantive archived JD; cannot replay fit or source eligibility",
+      "evidence": [],
+      "historical_status": "failed",
+      "historical_report": "588",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "96",
+      "company": "Keeper Security",
+      "title": "Senior Federal Platform Engineer",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "589",
+      "historical_decision": "Skip",
+      "archived_jd_available": true
+    },
+    {
+      "id": "97",
+      "company": "Nimble Gravity",
+      "title": "Sr AI Engineer",
+      "decision": "source_unconfirmed",
+      "reason": "Hiring source is unknown or unconfirmed",
+      "evidence": [
+        "Nimble Gravity"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "98",
+      "company": "BPD",
+      "title": "AI Engineer",
+      "decision": "source_unconfirmed",
+      "reason": "Hiring source is unknown or unconfirmed",
+      "evidence": [
+        "BPD"
+      ],
+      "historical_status": "skipped",
+      "historical_report": "-",
+      "historical_decision": null,
+      "archived_jd_available": false
+    },
+    {
+      "id": "99",
+      "company": "Qualia",
+      "title": "Senior Software Engineer - Resware",
+      "decision": "needs_fit_screening",
+      "reason": "Deterministic gates pass; source, location and plausible Apply fit still need economy screening",
+      "evidence": [],
+      "historical_status": "completed",
+      "historical_report": "590",
+      "historical_decision": "Consider",
+      "archived_jd_available": true
+    }
+  ]
+}

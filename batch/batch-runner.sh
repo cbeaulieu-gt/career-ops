@@ -846,6 +846,7 @@ screen_offer() {
   mkdir -p "$receipt_dir"
   local -a screen_args=(--url "$url" --source "$source" --notes "$notes" --cli "$screen_cli" --phase "$phase" --receipt "$receipt_dir/${id}.json")
   [[ -n "$jd_file" ]] && screen_args+=(--jd-file "$jd_file")
+  [[ -f "$BATCH_DIR/screening-input/${id}.json" ]] && screen_args+=(--job-file "$BATCH_DIR/screening-input/${id}.json")
   [[ -n "$SCREEN_MODEL" ]] && screen_args+=(--screen-model "$SCREEN_MODEL")
   [[ "$ALLOW_STRETCH" == "true" ]] && screen_args+=(--allow-stretch)
   local output rc=0
@@ -883,7 +884,12 @@ screen_offer() {
     error) status=failed; retries=$((retries + 1)) ;;
     *) log_discard "$id" "$url" "$decision: $reason" ;;
   esac
-  update_state "$id" "$url" "$status" "$started" "$completed" "-" "-" "$decision: $reason" "$retries"
+  local persist_rc=0
+  update_state_retrying "$id" "$url" "$status" "$started" "$completed" "-" "-" "$decision: $reason" "$retries" || persist_rc=$?
+  if [[ "$persist_rc" -eq 2 ]]; then
+    echo "ERROR: Screening #$id could not persist its outcome; full evaluation was not started" >&2
+    return 2
+  fi
   echo "    Screening #$id ($phase): $decision — $reason"
   return 1
 }
@@ -896,7 +902,10 @@ process_offer() {
   local retries
   retries=$(get_retries "$id")
   local report_num
-  if ! screen_offer metadata "$id" "$url" "$source" "$notes" "$started_at" "$retries"; then
+  local screening_rc=0
+  screen_offer metadata "$id" "$url" "$source" "$notes" "$started_at" "$retries" || screening_rc=$?
+  if (( screening_rc != 0 )); then
+    (( screening_rc == 2 )) && return 2
     return 0
   fi
   local date
@@ -1040,8 +1049,11 @@ process_offer() {
       fi
   fi
 
-  if ! screen_offer admission "$id" "$url" "$source" "$notes" "$started_at" "$retries" "$jd_file"; then
+  screening_rc=0
+  screen_offer admission "$id" "$url" "$source" "$notes" "$started_at" "$retries" "$jd_file" || screening_rc=$?
+  if (( screening_rc != 0 )); then
     rm -f "$jd_file"
+    (( screening_rc == 2 )) && return 2
     return 0
   fi
   if ! report_num=$(reserve_report_num_retrying "$id" "$url" "$started_at" "$retries"); then

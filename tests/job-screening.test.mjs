@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { passesScreeningTitle, screenMetadata, validateScreeningVerdict } from '../job-screening.mjs';
+import { passesScreeningTitle, screenMetadata, validateScreeningVerdict, unsupportedRequirement } from '../job-screening.mjs';
 
 const portals = { title_filter: { positive: ['Software Engineer', 'Data Engineer'], negative: ['GPU', 'CUDA', 'Principal', 'word:intern'] } };
 const policy = {
@@ -9,6 +9,17 @@ const policy = {
   title_exceptions: [{ companies: ['NVIDIA'], negative: ['GPU'], positive: ['Data Engineer + GPU Platform', 'Software Engineer + GPU Developer Tools'] }],
 };
 const options = { portals, policy };
+
+test('standalone preferred/bonus headings terminate mandatory context', () => {
+  for (const heading of ['Preferred', 'Preferred:', 'Nice to have:', 'Bonus points:']) assert.equal(unsupportedRequirement('Required Qualifications\nPython experience\n' + heading + '\nCUDA experience', ['CUDA']), null);
+});
+
+test('common JD headings distinguish required and standout skills and allow supported language alternatives', () => {
+  assert.equal(unsupportedRequirement('**What we need to see:**\nCUDA programming experience', ['CUDA'])?.requirement, 'CUDA');
+  assert.equal(unsupportedRequirement('**What we need to see:**\nPython\n**Ways to stand out from the crowd:**\nCUDA programming', ['CUDA']), null);
+  assert.equal(unsupportedRequirement('Python or Rust is required.', ['Rust'], ['Python']), null);
+  assert.equal(unsupportedRequirement('Python and Rust are required.', ['Rust'], ['Python'])?.requirement, 'Rust');
+});
 
 test('invalid policy fails closed and requirements sections do not leak into responsibilities', () => {
   assert.throws(() => screenMetadata({ title: 'Software Engineer' }, { policy: { reject_required: 'CUDA' } }), /reject_required/);

@@ -31,11 +31,11 @@
 
 **Interfaces:** `screenMetadata(job, options)` returns `{ decision, reason, evidence }`; `screenAdmission(job, context, dependencies)` additionally returns JD and screening model metadata. Verdicts are `shortlist`, `filtered`, `source_unconfirmed`, `inaccessible`, `needs_review`, or `error`.
 
-- [ ] Write failing tests for required/preferred requirements, scoped exceptions, location ambiguity, source confirmation and malformed worker JSON. Use `assert.equal(screenMetadata(job, options).decision, 'filtered')` and injected fetch/model spies for admission ordering.
-- [ ] Run `node --test tests/job-screening.test.mjs tests/screen-job.test.mjs`; confirm missing implementations fail.
-- [ ] Implement the pure predicates and compact read-only admission command using existing filtering/extraction helpers; validate schemas and models before dispatch.
-- [ ] Run the tests, including no fetch/model call after metadata rejection and no full-context/report/PDF prompt in the screening worker.
-- [ ] Commit this independently tested gate.
+- [x] Write failing tests for required/preferred requirements, scoped exceptions, location ambiguity, source confirmation and malformed worker JSON. Use `assert.equal(screenMetadata(job, options).decision, 'filtered')` and injected fetch/model spies for admission ordering.
+- [x] Run `node --test tests/job-screening.test.mjs tests/screen-job.test.mjs`; confirm missing implementations fail.
+- [x] Implement the pure predicates and compact read-only admission command using existing filtering/extraction helpers; validate schemas and models before dispatch.
+- [x] Run the tests, including no fetch/model call after metadata rejection and no full-context/report/PDF prompt in the screening worker.
+- [x] Commit this independently tested gate.
 
 ## Task 2 — enforce admission in batch and discovery
 
@@ -43,17 +43,17 @@
 
 **Interfaces:** Node command emits an admission receipt; batch maps screening outcomes to existing state statuses before `reserve_report_num_retrying`. Discovery consumes the same pure policy.
 
-- [ ] Write a failing fixture test whose screening rejection makes the fake evaluation CLI and report reservation fail if called.
-- [ ] Implement two-phase screening around existing prefetch; retain state locks and expose fit-only stretch and explicit screening-model arguments.
-- [ ] Test malformed receipts, infrastructure failure, source skips and CLI model routing; keep legacy dispatch tests passing.
-- [ ] Run the related discovery/batch tests and commit integration.
+- [x] Write a failing fixture test whose screening rejection makes the fake evaluation CLI and report reservation fail if called.
+- [x] Implement two-phase screening around existing prefetch; retain state locks and expose fit-only stretch and explicit screening-model arguments.
+- [x] Test malformed receipts, infrastructure failure, source skips and CLI model routing; keep legacy dispatch tests passing.
+- [x] Run the related discovery/batch tests and commit integration.
 
 ## Task 3 — targeting, replay and documentation
 
 **Files:** configuration example, README/mode instructions, `scripts/replay-screening.mjs`, `tests/screening-replay.test.mjs`, durable aggregate replay report under `docs/`.
 
-- [ ] Add tests that replay uses pre-evaluation metadata/JDs and never uses a historical recommendation as screening input.
-- [ ] Implement offline replay with missing-evidence counters and explicit dispositions for historical Apply jobs. Document configuration and command usage in README and modes.
-- [ ] Stage tightened user-layer criteria separately from reusable code and validate against the main checkout's historical batch, read-only.
-- [ ] Run `node test-all.mjs` with Git Bash available, syntax and diff checks. Audit every committed file reference against `git ls-tree HEAD` before publishing.
+- [x] Add tests that replay uses pre-evaluation metadata/JDs and never uses a historical recommendation as screening input.
+- [x] Implement offline replay with missing-evidence counters and explicit dispositions for historical Apply jobs. Document configuration and command usage in README and modes.
+- [x] Stage tightened user-layer criteria separately from reusable code and validate against the main checkout's historical batch, read-only.
+- [x] Run `node test-all.mjs` with Git Bash available, syntax and diff checks. Audit every committed file reference against `git ls-tree HEAD` before publishing.
 - [ ] Commit final changes and create a PR with `Closes #66`; attach it to this chat. Keep the plan until the issue closes, then extract durable rationale and remove it.

@@ -8,7 +8,7 @@ const verdict = (decision, reason, evidence = []) => ({ decision, reason, eviden
 export function validateScreeningPolicy(policy = {}) {
   if (!policy || typeof policy !== 'object' || Array.isArray(policy)) throw new Error('screening must be a mapping');
   if (policy.unknown_source !== undefined && !['skip', 'review'].includes(policy.unknown_source)) throw new Error('screening.unknown_source must be skip or review');
-  for (const key of ['reject_required', 'agency_companies', 'unconfirmed_urls', 'excluded_urls']) {
+  for (const key of ['reject_required', 'supported_alternatives', 'agency_companies', 'unconfirmed_urls', 'excluded_urls']) {
     if (policy[key] !== undefined && (!Array.isArray(policy[key]) || policy[key].some(value => typeof value !== 'string' || !value.trim()))) throw new Error(`screening.${key} must be a list of nonempty strings`);
   }
   if (policy.title_exceptions !== undefined) {
@@ -38,18 +38,24 @@ export function passesScreeningTitle(title, company, titleFilter, policy = {}, e
 }
 
 /** Find an explicit mandatory requirement, never a preferred or negated skill. */
-export function unsupportedRequirement(description, rules = []) {
+export function unsupportedRequirement(description, rules = [], supportedAlternatives = []) {
   const matchers = rules.filter(rule => typeof rule === 'string' && rule.trim())
     .map(rule => ({ rule, matches: compileContentKeyword(normalize(rule)) }));
   let requiredSection = false;
   for (const raw of String(description ?? '').replace(/<[^>]*>/g, '\n').split(/\r?\n|(?<=[.!?])\s+/u)) {
     const text = raw.trim();
-    const lower = normalize(text);
+    const lower = normalize(text).replace(/[*_]/g, '').replace(/^#{1,6}\s*/, '');
+    if (/^(?:preferred|desired|bonus(?: points)?|nice.to.have)\s*:?$/.test(lower)) requiredSection = false;
     if (/^(?:#{1,6}\s*)?(?:responsibilities|what you(?:'ll| will) do|about (?:us|the role)|benefits|compensation)\b/.test(lower)) requiredSection = false;
     if (/^(?:#{1,6}\s*)?(?:preferred|desired|bonus|nice.to.have|additional)\s+(?:qualifications|skills|experience)/.test(lower)) requiredSection = false;
+    if (/^(?:ways to stand out|how (?:you can|to) stand out|what makes you stand out)/.test(lower)) requiredSection = false;
     if (/^(?:#{1,6}\s*)?(?:required|minimum|basic)\s+(?:qualifications|skills|experience)/.test(lower)) requiredSection = true;
+    if (/^what (?:we need to see|you(?:'ll| will) bring)/.test(lower)) requiredSection = true;
     if (/\b(?:preferred|optional|nice.to.have|bonus|not required)\b|\bno\b.*\brequired\b/.test(lower)) continue;
     if (!requiredSection && !/\b(?:required|must|mandatory|need to have)\b/.test(lower)) continue;
+    // An explicitly supported option means this disjunction alone is not proof
+    // of a mandatory gap. Complex mixed clauses stay with the fit screener.
+    if (/\bor\b/.test(lower) && supportedAlternatives.some(term => compileContentKeyword(normalize(term))(lower))) continue;
     const hit = matchers.find(({ matches }) => matches(lower));
     if (hit) return { requirement: hit.rule, evidence: text };
   }
@@ -71,7 +77,7 @@ export function screenMetadata(job, { portals = {}, policy = {}, allowStretch = 
     return verdict('filtered', 'Title does not meet configured targeting', [job.title]);
   }
   if (!allowStretch) {
-    const unsupported = unsupportedRequirement(job.description, policy.reject_required);
+    const unsupported = unsupportedRequirement(job.description, policy.reject_required, policy.supported_alternatives);
     if (unsupported) return verdict('filtered', `Unsupported mandatory requirement: ${unsupported.requirement}`, [unsupported.evidence]);
   }
   return verdict('shortlist', 'Available metadata passes; JD and source still require admission checks');

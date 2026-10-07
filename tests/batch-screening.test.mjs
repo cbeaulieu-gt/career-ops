@@ -42,6 +42,19 @@ test('metadata rejection stops before curl, reservation and evaluation dispatch'
   } finally { rmSync(f.root,{recursive:true,force:true}); }
 });
 
+test('screening terminal results use the durable state retry/recovery path', () => {
+  const f = fixture();
+  try {
+    const runner = join(f.batch, 'batch-runner.sh');
+    const stub = `update_state_retrying() { printf '%s' "$3" > "${join(f.root,'durable-called').replaceAll('\\','/')}"; return 1; }\n`;
+    writeFileSync(runner, readFileSync(runner,'utf8').replace('process_offer() {', stub + 'process_offer() {'));
+    const result = f.run({METADATA_DECISION:'source_unconfirmed'});
+    assert.ifError(result.error); assert.equal(result.status,0,result.stdout+result.stderr);
+    assert.equal(readFileSync(join(f.root,'durable-called'),'utf8'), 'skipped');
+    assert.equal(existsSync(join(f.root,'claude-called')), false);
+  } finally { rmSync(f.root,{recursive:true,force:true}); }
+});
+
 test('fit rejection and malformed screening output never reserve reports or launch evaluation', () => {
   for(const [decision,status] of [['filtered','skipped'],['needs_review','needs_confirmation'],['malformed','failed']]) {
     const f=fixture();
@@ -53,4 +66,16 @@ test('fit rejection and malformed screening output never reserve reports or laun
       assert.equal(existsSync(join(f.root,'claude-called')),false);
     } finally { rmSync(f.root,{recursive:true,force:true}); }
   }
+});
+
+test('loss of both state and recovery persistence stops the batch', () => {
+  const f = fixture();
+  try {
+    const runner = join(f.batch, 'batch-runner.sh');
+    writeFileSync(runner, readFileSync(runner,'utf8').replace('process_offer() {', 'update_state_retrying() { return 2; }\nprocess_offer() {'));
+    const result = f.run({METADATA_DECISION:'source_unconfirmed'});
+    assert.ifError(result.error); assert.notEqual(result.status,0,result.stdout+result.stderr);
+    assert.match(result.stderr, /could not persist its outcome/);
+    assert.equal(existsSync(join(f.root,'claude-called')), false);
+  } finally { rmSync(f.root,{recursive:true,force:true}); }
 });
