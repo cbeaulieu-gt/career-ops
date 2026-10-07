@@ -56,4 +56,10 @@
 - [x] Implement offline replay with missing-evidence counters and explicit dispositions for historical Apply jobs. Document configuration and command usage in README and modes.
 - [x] Stage tightened user-layer criteria separately from reusable code and validate against the main checkout's historical batch, read-only.
 - [x] Run `node test-all.mjs` with Git Bash available, syntax and diff checks. Audit every committed file reference against `git ls-tree HEAD` before publishing.
-- [ ] Commit final changes and create a PR with `Closes #66`; attach it to this chat. Keep the plan until the issue closes, then extract durable rationale and remove it.
+- [x] Commit final changes and create a PR with `Closes #66`; attach it to this chat. Keep the plan until the issue closes, then extract durable rationale and remove it.
+
+Implementation published as [PR #67](https://github.com/cbeaulieu-gt/career-ops/pull/67).
+Validation: 10,711 checks passed, zero failed; 11 environment/pre-existing
+warnings reviewed. Artifact persistence verified with `git ls-tree HEAD` for
+all new modules, replay audit, specification and plan. The plan remains until
+issue #66 closes.
